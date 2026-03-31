@@ -24,7 +24,6 @@ const MindMapGraph: React.FC<MindMapGraphProps> = ({ data, mapConfig }) => {
       // Nastavení fyziky grafu podle konfigurace mapy
       fg.d3Force('charge')?.strength((mapConfig.repulsion_force ?? 100) * -1);
       fg.d3Force('center')?.strength(mapConfig.gravity_strength ?? 0.05);
-      fg.d3VelocityDecay(1 - (mapConfig.friction ?? 0.9));
       fg.d3ReheatSimulation();
     }
   }, [mapConfig, data]);
@@ -38,12 +37,12 @@ const MindMapGraph: React.FC<MindMapGraphProps> = ({ data, mapConfig }) => {
     const textWidth = ctx.measureText(label).width;
     const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.4); // padding
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.fillStyle = 'rgba(40, 40, 40, 0.95)'; // Tmavší pozadí pro uzel
     ctx.fillRect(graphNode.x! - bckgDimensions[0] / 2, graphNode.y! - bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1]);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = 'white'; // Světlejší písmo
     ctx.fillText(label, graphNode.x!, graphNode.y!);
   }, []);
 
@@ -53,10 +52,11 @@ const MindMapGraph: React.FC<MindMapGraphProps> = ({ data, mapConfig }) => {
       graphData={data}
       nodeLabel="title"
       nodeCanvasObject={nodeCanvasObject}
-      linkColor={() => 'rgba(0,0,0,0.2)'}
+      linkColor={() => 'rgba(255, 255, 255, 0.3)'} // Světlejší spojnice
       linkWidth={1}
       cooldownTicks={100}
       onEngineStop={() => fgRef.current?.zoomToFit(400, 100)}
+      d3VelocityDecay={1 - (mapConfig.friction ?? 0.9)}
     />
   );
 };
