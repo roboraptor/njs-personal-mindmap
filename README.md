@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Osobní myšlenková mapa
 
-## Getting Started
+Toto je Next.js aplikace určená k vytváření a správě osobních myšlenkových map. Umožňuje uživatelům vizuálně organizovat své myšlenky, nápady a informace v hierarchické struktuře grafu.
 
-First, run the development server:
+## Funkce
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Vytváření a správa map:** Snadno vytvářejte nové myšlenkové mapy pro různá témata nebo projekty.
+- **Správa uzlů:** Přidávejte, upravujte a mažte uzly v rámci myšlenkové mapy.
+- **Vizualizace grafu:** Zobrazte si svou myšlenkovou mapu jako interaktivní graf.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Použité technologie
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Framework:** [Next.js](https://nextjs.org/)
+- **Jazyk:** [TypeScript](https://www.typescriptlang.org/)
+- **ORM:** [Drizzle ORM](https://orm.drizzle.team/)
+- **Databáze:** PostgreSQL (předpoklad, lze použít i jinou SQL databázi podporovanou Drizzle)
+- **UI:** React Server Components & Client Components
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Jak začít
 
-## Learn More
+Postupujte podle těchto pokynů, abyste projekt zprovoznili na svém lokálním počítači.
 
-To learn more about Next.js, take a look at the following resources:
+### Předpoklady
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [Node.js](https://nodejs.org/en/) (doporučena verze 18.x nebo novější)
+- [npm](https://www.npmjs.com/), [yarn](https://yarnpkg.com/) nebo [pnpm](https://pnpm.io/)
+- Spuštěná instance databáze PostgreSQL.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Instalace a nastavení
 
-## Deploy on Vercel
+1.  **Naklonujte repozitář:**
+    ```bash
+    git clone <url-vašeho-repozitáře>
+    cd njs-personal-mindmap
+    ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2.  **Nainstalujte závislosti:**
+    ```bash
+    npm install
+    ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3.  **Nakonfigurujte své prostředí:**
+    Vytvořte soubor `.env.local` v kořenovém adresáři projektu a přidejte svůj připojovací řetězec k databázi:
+    ```
+    DATABASE_URL="postgresql://uzivatel:heslo@host:port/nazev_databaze"
+    ```
+
+4.  **Spusťte databázové migrace:**
+    Tento příkaz aplikuje schéma databáze.
+    ```bash
+    npm run db:migrate
+    ```
+
+5.  **Spusťte vývojový server:**
+    ```bash
+    npm run dev
+    ```
+
+Otevřete [http://localhost:3000](http://localhost:3000) ve svém prohlížeči a uvidíte výsledek.
+
+## Struktura projektu
+
+-   `drizzle/`: Obsahuje soubory s migracemi databáze generované nástrojem Drizzle.
+-   `src/app/`: Stránky a layouty pro Next.js App Router.
+-   `src/components/`: Opakovaně použitelné React komponenty.
+-   `src/actions/`: Server Actions pro odesílání formulářů a mutace dat.
+-   `src/data/`: Repozitáře pro interakci s databází.
+-   `src/db/`: Nastavení Drizzle ORM, definice schémat a připojení k databázi.
+-   `scripts/`: Skripty pro úlohy, jako je migrace databáze.
