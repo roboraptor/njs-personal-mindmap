@@ -1,69 +1,74 @@
-# Osobní myšlenková mapa
+# Personal Mind Map
 
-Toto je Next.js aplikace určená k vytváření a správě osobních myšlenkových map. Umožňuje uživatelům vizuálně organizovat své myšlenky, nápady a informace v hierarchické struktuře grafu.
+This is a modern Next.js application designed to create and manage personal mind maps. It allows users to visually organize their thoughts, ideas, and information using both a free-floating organic graph ("Space" view) and a structured hierarchical tree ("Tree" view).
 
-## Funkce
+## Core Features
 
-- **Vytváření a správa map:** Snadno vytvářejte nové myšlenkové mapy pro různá témata nebo projekty.
-- **Správa uzlů:** Přidávejte, upravujte a mažte uzly v rámci myšlenkové mapy.
-- **Vizualizace grafu:** Zobrazte si svou myšlenkovou mapu jako interaktivní graf.
+- **Two views for identical data:** Toggle seamlessly between the "Space" view (a physically simulated cluster using Force Graph) and the "Tree" view (a hierarchically formatted diagram using React Flow).
+- **Create and manage maps:** Easily create multiple mind maps to organize different topics, ideas, or projects.
+- **Advanced node management:** Nodes support deep nesting (`parent_id`), arbitrary interconnecting (`cross_links`), and collapsible container mechanics (`collapsible`).
+- **Smart branch moving:** When operating in the "Tree" view, you can toggle the "Move including descendants" feature to effortlessly drag and reorganize an entire logical branch at once.
+- **Physical engine customization:** Nodes support individual attributes such as mass (`mass`), bond length (`distance`), and custom JSON styling to fine-tune the organic physics layout in the "Space" view.
 
-## Použité technologie
+## Tech Stack
 
-- **Framework:** [Next.js](https://nextjs.org/)
-- **Jazyk:** [TypeScript](https://www.typescriptlang.org/)
+- **Framework:** [Next.js](https://nextjs.org/) (App Router, Server Actions)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
 - **ORM:** [Drizzle ORM](https://orm.drizzle.team/)
-- **Databáze:** PostgreSQL (předpoklad, lze použít i jinou SQL databázi podporovanou Drizzle)
-- **UI:** React Server Components & Client Components
+- **Database:** [SQLite](https://sqlite.org/) (local database using `better-sqlite3`, stored as `mindmap.db`)
+- **Visualization:** 
+  - `@xyflow/react` (Tree / React Flow)
+  - `react-force-graph-2d` (Space / Force Graph)
+  - `d3-force` & `dagre` (Simulation algorithms and automatic hierarchical layout retopology)
+- **UI:** React Server Components & Client Components, Bootstrap 5
 
-## Jak začít
+## Getting Started
 
-Postupujte podle těchto pokynů, abyste projekt zprovoznili na svém lokálním počítači.
+Follow these steps to get the project up and running smoothly on your local machine.
 
-### Předpoklady
+### Prerequisites
 
-- [Node.js](https://nodejs.org/en/) (doporučena verze 18.x nebo novější)
-- [npm](https://www.npmjs.com/), [yarn](https://yarnpkg.com/) nebo [pnpm](https://pnpm.io/)
-- Spuštěná instance databáze PostgreSQL.
+- [Node.js](https://nodejs.org/en/) (Version 18.x or newer is recommended)
+- `npm`, `yarn`, or `pnpm`
 
-### Instalace a nastavení
+### Installation & Setup
 
-1.  **Naklonujte repozitář:**
+1.  **Clone the repository:**
     ```bash
-    git clone <url-vašeho-repozitáře>
+    git clone <your-repository-url>
     cd njs-personal-mindmap
     ```
 
-2.  **Nainstalujte závislosti:**
+2.  **Install dependencies:**
     ```bash
     npm install
     ```
 
-3.  **Nakonfigurujte své prostředí:**
-    Vytvořte soubor `.env.local` v kořenovém adresáři projektu a přidejte svůj připojovací řetězec k databázi:
-    ```
-    DATABASE_URL="postgresql://uzivatel:heslo@host:port/nazev_databaze"
-    ```
-
-4.  **Spusťte databázové migrace:**
-    Tento příkaz aplikuje schéma databáze.
+3.  **Run database migrations:**
+    This project uses a simple local SQLite database. The following command will automatically create the `mindmap.db` file and set up all necessary tables.
     ```bash
-    npm run db:migrate
+    npx drizzle-kit push
     ```
 
-5.  **Spusťte vývojový server:**
+4.  **Seed the database with sample data (optional, but highly recommended):**
+    This script will generate a beautiful "Large Scale Map" with nested Backend/Frontend structural branches so you can immediately test all the physics, layout, and moving features.
+    ```bash
+    npx tsx scripts/seed-map.ts
+    ```
+
+5.  **Start the development server:**
     ```bash
     npm run dev
     ```
 
-Otevřete [http://localhost:3000](http://localhost:3000) ve svém prohlížeči a uvidíte výsledek.
+Open [http://localhost:3000](http://localhost:3000) in your web browser. The top navigation bar will let you select the uploaded map and switch between views.
 
-## Struktura projektu
+## Project Structure
 
--   `drizzle/`: Obsahuje soubory s migracemi databáze generované nástrojem Drizzle.
--   `src/app/`: Stránky a layouty pro Next.js App Router.
--   `src/components/`: Opakovaně použitelné React komponenty.
--   `src/actions/`: Server Actions pro odesílání formulářů a mutace dat.
--   `src/data/`: Repozitáře pro interakci s databází.
--   `src/db/`: Nastavení Drizzle ORM, definice schémat a připojení k databázi.
--   `scripts/`: Skripty pro úlohy, jako je migrace databáze.
+-   `drizzle/`: Contains database migration files generated by the Drizzle tool.
+-   `src/app/`: Next.js App Router pages and layouts.
+-   `src/components/`: Reusable, interactive UI React components.
+-   `src/actions/`: Next.js Server Actions for handling form submissions and data mutations.
+-   `src/data/`: Data-access repositories for secure interaction with the database.
+-   `src/db/`: Drizzle ORM configuration, schema definitions, and SQLite instance connection.
+-   `scripts/`: General-purpose scripts (e.g. database seeds).
