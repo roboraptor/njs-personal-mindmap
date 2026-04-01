@@ -4,8 +4,8 @@ CREATE TABLE `cross_links` (
 	`source_node_id` text NOT NULL,
 	`target_node_id` text NOT NULL,
 	`label` text,
-	`created_at` integer DEFAULT '"2026-03-31T12:43:42.984Z"',
-	`updated_at` integer DEFAULT '"2026-03-31T12:43:42.984Z"',
+	`created_at` integer DEFAULT '"2026-03-31T14:45:51.558Z"',
+	`updated_at` integer DEFAULT '"2026-03-31T14:45:51.558Z"',
 	FOREIGN KEY (`map_id`) REFERENCES `maps`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`source_node_id`) REFERENCES `nodes`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`target_node_id`) REFERENCES `nodes`(`id`) ON UPDATE no action ON DELETE cascade
@@ -19,8 +19,8 @@ CREATE TABLE `maps` (
 	`repulsion_force` real DEFAULT 100,
 	`friction` real DEFAULT 0.9,
 	`theme_json` text,
-	`created_at` integer DEFAULT '"2026-03-31T12:43:42.982Z"',
-	`updated_at` integer DEFAULT '"2026-03-31T12:43:42.982Z"'
+	`created_at` integer DEFAULT '"2026-03-31T14:45:51.557Z"',
+	`updated_at` integer DEFAULT '"2026-03-31T14:45:51.557Z"'
 );
 --> statement-breakpoint
 CREATE TABLE `nodes` (
@@ -29,6 +29,7 @@ CREATE TABLE `nodes` (
 	`parent_id` text,
 	`title` text NOT NULL,
 	`content` text,
+	`display_type` text DEFAULT 'button' NOT NULL,
 	`image_url` text,
 	`distance` real DEFAULT 150,
 	`angle` real DEFAULT 0,
@@ -36,8 +37,8 @@ CREATE TABLE `nodes` (
 	`is_collapsed` integer DEFAULT false,
 	`style_json` text,
 	`sort_order` integer DEFAULT 0,
-	`created_at` integer DEFAULT '"2026-03-31T12:43:42.983Z"',
-	`updated_at` integer DEFAULT '"2026-03-31T12:43:42.983Z"',
+	`created_at` integer DEFAULT '"2026-03-31T14:45:51.558Z"',
+	`updated_at` integer DEFAULT '"2026-03-31T14:45:51.558Z"',
 	FOREIGN KEY (`map_id`) REFERENCES `maps`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`parent_id`) REFERENCES `nodes`(`id`) ON UPDATE no action ON DELETE cascade
 );

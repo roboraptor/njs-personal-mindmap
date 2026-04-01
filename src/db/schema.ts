@@ -20,6 +20,7 @@ export const nodes = sqliteTable('nodes', {
   parent_id: text('parent_id').references((): any => nodes.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
   content: text('content'),
+  display_type: text('display_type').notNull().default('button'), // 'button', 'collapsible', 'image'
   image_url: text('image_url'),
   distance: real('distance').default(150.0),
   angle: real('angle').default(0.0),

@@ -28,7 +28,10 @@ export default async function MapPage({ params }: MapPageProps) {
 
   const graphData = {
     nodes,
-    links: links.map(l => ({ source: l.source_node_id, target: l.target_node_id })),
+    links: [
+      ...links.map(l => ({ source: l.source_node_id, target: l.target_node_id })),
+      ...nodes.filter(n => n.parent_id).map(n => ({ source: n.parent_id!, target: n.id }))
+    ],
   };
 
   const mapConfig = {
@@ -39,7 +42,7 @@ export default async function MapPage({ params }: MapPageProps) {
 
   return (
     <main>
-      <MindMapClient data={graphData} mapConfig={mapConfig} />
+      <MindMapClient data={graphData} mapConfig={mapConfig} mapId={mapId} />
     </main>
   );
 }

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "523ccbd8-5b0e-4908-8cee-807aa25ca38f",
+  "id": "deda5de5-9ac1-480d-ba91-abbe791b31b7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "cross_links": {
@@ -48,7 +48,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'\"2026-03-31T12:43:42.984Z\"'"
+          "default": "'\"2026-03-31T14:45:51.558Z\"'"
         },
         "updated_at": {
           "name": "updated_at",
@@ -56,7 +56,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'\"2026-03-31T12:43:42.984Z\"'"
+          "default": "'\"2026-03-31T14:45:51.558Z\"'"
         }
       },
       "indexes": {},
@@ -166,7 +166,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'\"2026-03-31T12:43:42.982Z\"'"
+          "default": "'\"2026-03-31T14:45:51.557Z\"'"
         },
         "updated_at": {
           "name": "updated_at",
@@ -174,7 +174,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'\"2026-03-31T12:43:42.982Z\"'"
+          "default": "'\"2026-03-31T14:45:51.557Z\"'"
         }
       },
       "indexes": {},
@@ -220,6 +220,14 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "display_type": {
+          "name": "display_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'button'"
         },
         "image_url": {
           "name": "image_url",
@@ -281,7 +289,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'\"2026-03-31T12:43:42.983Z\"'"
+          "default": "'\"2026-03-31T14:45:51.558Z\"'"
         },
         "updated_at": {
           "name": "updated_at",
@@ -289,7 +297,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'\"2026-03-31T12:43:42.983Z\"'"
+          "default": "'\"2026-03-31T14:45:51.558Z\"'"
         }
       },
       "indexes": {},

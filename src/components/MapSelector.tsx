@@ -1,8 +1,7 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import type { Map } from '@/db/schema';
-import Link from 'next/link';
 
 interface MapSelectorProps {
   maps: Map[];
@@ -10,32 +9,34 @@ interface MapSelectorProps {
 
 export default function MapSelector({ maps }: MapSelectorProps) {
   const pathname = usePathname();
-  const currentMap = maps.find(map => pathname.includes(map.id));
+  const router = useRouter();
 
   if (maps.length === 0) {
     return null; // or a placeholder
   }
 
+  const currentMap = maps.find(map => pathname.includes(map.id));
+
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedMapId = e.target.value;
+    if (selectedMapId) {
+      router.push(`/maps/${selectedMapId}`);
+    }
+  };
+
   return (
-    <div className="dropdown">
-      <button
-        className="btn btn-secondary dropdown-toggle"
-        type="button"
-        id="mapSelectorDropdown"
-        data-bs-toggle="dropdown"
-        aria-expanded="false"
-      >
-        {currentMap ? currentMap.title : 'Vybrat mapu'}
-      </button>
-      <ul className="dropdown-menu" aria-labelledby="mapSelectorDropdown">
-        {maps.map(map => (
-          <li key={map.id}>
-            <Link href={`/maps/${map.id}`} className={`dropdown-item ${currentMap?.id === map.id ? 'active' : ''}`}>
-              {map.title}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <select 
+      className="form-select bg-dark text-light border-secondary" 
+      value={currentMap?.id || ''} 
+      onChange={handleChange}
+      aria-label="Výběr mapy"
+    >
+      <option value="" disabled>Vybrat mapu...</option>
+      {maps.map(map => (
+        <option key={map.id} value={map.id}>
+          {map.title}
+        </option>
+      ))}
+    </select>
   );
 }

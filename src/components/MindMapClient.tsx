@@ -2,6 +2,9 @@
 
 import type { Map, Node } from '@/db/schema';
 import dynamic from 'next/dynamic';
+import { useEffect, useState } from 'react';
+import EditNodeModal from './EditNodeModal';
+import { toggleNodeCollapse } from '@/actions/nodeActions';
 
 // Komponentu MindMapGraph importujeme dynamicky a vypneme pro ni server-side rendering (SSR).
 // Tím zajistíme, že se bude načítat a spouštět pouze v prohlížeči.
@@ -17,9 +20,61 @@ interface MindMapClientProps {
     links: { source: string; target: string }[];
   };
   mapConfig: Pick<Map, 'gravity_strength' | 'repulsion_force' | 'friction'>;
+  mapId: string;
 }
 
 // Tato komponenta slouží jako klientský obal pro graf.
-export default function MindMapClient({ data, mapConfig }: MindMapClientProps) {
-  return <MindMapGraph data={data} mapConfig={mapConfig} />;
+export default function MindMapClient({ data, mapConfig, mapId }: MindMapClientProps) {
+  const [editingNode, setEditingNode] = useState<Node | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('edit');
+
+  useEffect(() => {
+    const handleOpenAddNodeModal = () => {
+      setModalMode('create');
+      setEditingNode(null);
+      setIsModalOpen(true);
+    };
+
+    window.addEventListener('openAddNodeModal', handleOpenAddNodeModal);
+    return () => {
+      window.removeEventListener('openAddNodeModal', handleOpenAddNodeModal);
+    };
+  }, []);
+
+  const handleNodeClick = (node: Node) => {
+    setModalMode('edit');
+    setEditingNode(node);
+    setIsModalOpen(true);
+  };
+
+  const handleNodeRightClick = (node: Node) => {
+    if (node.display_type === 'collapsible') {
+        toggleNodeCollapse(node.id, node.map_id, node.is_collapsed ?? false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingNode(null);
+  };
+
+  return (
+    <>
+      <MindMapGraph 
+        data={data} 
+        mapConfig={mapConfig} 
+        onNodeClick={handleNodeClick}
+        onNodeRightClick={handleNodeRightClick}
+      />
+      <EditNodeModal 
+        isOpen={isModalOpen}
+        mode={modalMode}
+        node={editingNode} 
+        nodes={data.nodes}
+        mapId={mapId}
+        onClose={handleCloseModal} 
+      />
+    </>
+  );
 }
