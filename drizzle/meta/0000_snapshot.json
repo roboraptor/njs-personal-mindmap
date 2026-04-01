@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "deda5de5-9ac1-480d-ba91-abbe791b31b7",
+  "id": "6e37efd9-63eb-45e6-898e-08407257c021",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "cross_links": {
@@ -48,7 +48,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'\"2026-03-31T14:45:51.558Z\"'"
+          "default": "'\"2026-04-01T21:00:55.543Z\"'"
         },
         "updated_at": {
           "name": "updated_at",
@@ -56,7 +56,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'\"2026-03-31T14:45:51.558Z\"'"
+          "default": "'\"2026-04-01T21:00:55.543Z\"'"
         }
       },
       "indexes": {},
@@ -166,7 +166,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'\"2026-03-31T14:45:51.557Z\"'"
+          "default": "'\"2026-04-01T21:00:55.542Z\"'"
         },
         "updated_at": {
           "name": "updated_at",
@@ -174,7 +174,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'\"2026-03-31T14:45:51.557Z\"'"
+          "default": "'\"2026-04-01T21:00:55.542Z\"'"
         }
       },
       "indexes": {},
@@ -236,29 +236,43 @@
           "notNull": false,
           "autoincrement": false
         },
-        "distance": {
-          "name": "distance",
+        "force_distance": {
+          "name": "force_distance",
           "type": "real",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
           "default": 150
         },
-        "angle": {
-          "name": "angle",
+        "force_angle": {
+          "name": "force_angle",
           "type": "real",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
           "default": 0
         },
-        "mass": {
-          "name": "mass",
+        "force_mass": {
+          "name": "force_mass",
           "type": "real",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
           "default": 1
+        },
+        "flow_x": {
+          "name": "flow_x",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "flow_y": {
+          "name": "flow_y",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "is_collapsed": {
           "name": "is_collapsed",
@@ -289,7 +303,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'\"2026-03-31T14:45:51.558Z\"'"
+          "default": "'\"2026-04-01T21:00:55.543Z\"'"
         },
         "updated_at": {
           "name": "updated_at",
@@ -297,7 +311,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'\"2026-03-31T14:45:51.558Z\"'"
+          "default": "'\"2026-04-01T21:00:55.543Z\"'"
         }
       },
       "indexes": {},

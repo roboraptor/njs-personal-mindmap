@@ -26,13 +26,13 @@ const MindMapGraph: React.FC<MindMapGraphProps> = ({ data, mapConfig, onNodeClic
     if (fg) {
       // Nastavení fyziky grafu s přihlédnutím k váze uzlu (mass)
       fg.d3Force('charge')?.strength((node: any) => {
-        return (mapConfig.repulsion_force ?? 100) * -1 * (node.mass ?? 1.0);
+        return (mapConfig.repulsion_force ?? 100) * -1 * (node.force_mass ?? 1.0);
       });
       fg.d3Force('center')?.strength(mapConfig.gravity_strength ?? 0.05);
 
       // Aplikace vzdálenosti (distance) definované v cílovém uzlu
       fg.d3Force('link')?.distance((link: any) => {
-        return link.target?.distance ?? 150;
+        return link.target?.force_distance ?? 150;
       });
 
       fg.d3ReheatSimulation();

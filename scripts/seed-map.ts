@@ -22,8 +22,10 @@ async function run() {
     id: rootId,
     map_id: mapId,
     title: 'Centrum',
-    mass: 3.0, // Nejtěžší bod uprostřed
+    force_mass: 3.0, // Nejtěžší bod uprostřed
     display_type: 'button',
+    flow_x: 400,
+    flow_y: 100,
   });
 
   // 3. Pár hlavních kategorií s různými styly a barvami
@@ -33,6 +35,8 @@ async function run() {
     { title: 'DevOps', color: 'rgba(255, 206, 86, 0.8)' },
   ];
 
+  let catX = 100;
+
   for (const cat of categories) {
     const catId = crypto.randomUUID();
     await db.insert(nodes).values({
@@ -40,11 +44,14 @@ async function run() {
       map_id: mapId,
       parent_id: rootId,
       title: cat.title,
-      distance: 200, 
-      mass: 1.5,
+      force_distance: 200, 
+      force_mass: 1.5,
       style_json: JSON.stringify({ linkColor: cat.color }), // Barva pro tuto vazbu
       display_type: 'button',
+      flow_x: catX,
+      flow_y: 300,
     });
+    catX += 300;
 
     // Ke každé kategorii přidáme 5 pod-uzlů
     for (let i = 1; i <= 5; i++) {
@@ -54,8 +61,8 @@ async function run() {
             map_id: mapId,
             parent_id: catId,
             title: `${cat.title} - Technologie ${i}`,
-            distance: 80 + (i * 20), // Postupně se prodlužující uzly
-            mass: 0.8,
+            force_distance: 80 + (i * 20), // Postupně se prodlužující uzly
+            force_mass: 0.8,
             style_json: JSON.stringify({ linkColor: cat.color }), // Dědí barvu od rodiče
             display_type: 'button',
         });
@@ -69,8 +76,8 @@ async function run() {
                     parent_id: subId,
                     title: `Detail ${j}`,
                     content: 'Nějaký delší popisek k této konkrétní technologii, abychom otestovali Collapsible uzel.',
-                    distance: 100,
-                    mass: 0.5,
+                    force_distance: 100,
+                    force_mass: 0.5,
                     display_type: 'collapsible',
                     is_collapsed: true,
                     style_json: JSON.stringify({ linkColor: 'rgba(200, 200, 200, 0.4)' }),

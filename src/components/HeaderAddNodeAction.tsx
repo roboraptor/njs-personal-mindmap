@@ -5,8 +5,8 @@ import { usePathname } from 'next/navigation';
 export default function HeaderAddNodeAction() {
   const pathname = usePathname();
 
-  // Zobrazit tlačítko pouze na stránce detailu mapy
-  if (!pathname?.startsWith('/maps/')) {
+  // Zobrazit tlačítko pouze na stránce detailu mapy nebo flow stromu
+  if (!pathname?.startsWith('/maps/') && !pathname?.startsWith('/flow/')) {
     return null;
   }
 

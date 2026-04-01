@@ -41,7 +41,17 @@ export async function toggleNodeCollapse(nodeId: string, mapId: string, is_colla
     try {
         await nodesRepository.update(nodeId, { is_collapsed: !is_collapsed });
         revalidatePath(`/maps/${mapId}`);
+        revalidatePath(`/flow/${mapId}`);
     } catch (error) {
         console.error('Chyba při změně stavu sbalení uzlu:', error);
     }
+}
+
+export async function updateNodePosition(nodeId: string, mapId: string, flow_x: number, flow_y: number) {
+  try {
+    await nodesRepository.update(nodeId, { flow_x, flow_y });
+    revalidatePath(`/flow/${mapId}`);
+  } catch (error) {
+    console.error('Chyba při aktualizaci pozice uzlu:', error);
+  }
 }

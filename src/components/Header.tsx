@@ -2,6 +2,7 @@ import { mapsRepository } from '@/data/mapsRepository';
 import Link from 'next/link';
 import MapSelector from './MapSelector';
 import HeaderAddNodeAction from './HeaderAddNodeAction';
+import ViewModeToggle from './ViewModeToggle';
 
 export default async function Header() {
   const maps = await mapsRepository.getAll();
@@ -16,6 +17,7 @@ export default async function Header() {
           <MapSelector maps={maps} />
         </div>
         <div className="ms-auto d-flex align-items-center">
+          <ViewModeToggle />
           <HeaderAddNodeAction />
           <Link href="/settings" className="btn btn-outline-secondary">
             Settings
