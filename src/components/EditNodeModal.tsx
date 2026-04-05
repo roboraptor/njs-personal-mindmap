@@ -10,10 +10,11 @@ interface EditNodeModalProps {
   node: Node | null;
   nodes: Node[];
   mapId: string;
+  initialParentId?: string;
   onClose: () => void;
 }
 
-export default function EditNodeModal({ isOpen, mode, node, nodes, mapId, onClose }: EditNodeModalProps) {
+export default function EditNodeModal({ isOpen, mode, node, nodes, mapId, initialParentId, onClose }: EditNodeModalProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [displayType, setDisplayType] = useState('button');
@@ -51,7 +52,7 @@ export default function EditNodeModal({ isOpen, mode, node, nodes, mapId, onClos
         setTitle('');
         setContent('');
         setDisplayType('button');
-        setParentId('');
+        setParentId(initialParentId || '');
         setImageUrl('');
         setForceDistance(150.0);
         setForceAngle(0.0);
@@ -63,7 +64,7 @@ export default function EditNodeModal({ isOpen, mode, node, nodes, mapId, onClos
         setSortOrder(0);
       }
     }
-  }, [isOpen, mode, node]);
+  }, [isOpen, mode, node, initialParentId]);
 
   if (!isOpen) return null;
 

@@ -158,6 +158,21 @@ const CustomNode = ({ data }: { data: any }) => {
           </div>
         </div>
 
+        {/* [+] TLAČÍTKO PRO PŘIDÁNÍ POTOMKA */}
+        {data.addChildMode && (
+          <button 
+            className="btn btn-sm btn-success p-0 d-flex justify-content-center align-items-center me-2"
+            style={{ width: '20px', height: '20px', borderRadius: '50%', fontSize: '14px', lineHeight: '1', zIndex: 10 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onAddChildClick?.(data.node);
+            }}
+            title="Přidat potomka"
+          >
+            +
+          </button>
+        )}
+
         {/* SAMOTNÝ TITULEK A AKCE PRO KLIKNUTÍ (MODÁL) */}
         <div 
           className="flex-grow-1 d-flex align-items-center"
@@ -196,6 +211,7 @@ interface FlowMapGraphProps {
   mapConfig: Pick<Map, 'gravity_strength' | 'repulsion_force' | 'friction'>;
   onNodeClick: (node: Node) => void;
   onNodeRightClick: (node: Node) => void;
+  onAddChildClick?: (node: Node) => void;
 }
 
 export default function FlowMapGraph(props: FlowMapGraphProps) {
@@ -206,7 +222,7 @@ export default function FlowMapGraph(props: FlowMapGraphProps) {
   );
 }
 
-function InnerFlowMapGraph({ data, mapConfig, onNodeClick, onNodeRightClick }: FlowMapGraphProps) {
+function InnerFlowMapGraph({ data, mapConfig, onNodeClick, onNodeRightClick, onAddChildClick }: FlowMapGraphProps) {
   // --- LAYOUTOVÁNÍ POMOCÍ DAGRE ---
   const nodeTypes = useMemo(() => ({ custom: CustomNode }), []);
   const edgeTypes = useMemo(() => ({ floating: FloatingEdge }), []);
@@ -295,13 +311,14 @@ function InnerFlowMapGraph({ data, mapConfig, onNodeClick, onNodeRightClick }: F
         data: { 
           node: node, 
           onClick: onNodeClick, 
-          onRightClick: onNodeRightClick 
+          onRightClick: onNodeRightClick,
+          onAddChildClick: onAddChildClick
         },
       });
     });
 
     return { flowNodes, flowEdges };
-  }, [onNodeClick, onNodeRightClick]);
+  }, [onNodeClick, onNodeRightClick, onAddChildClick]);
 
   const { flowNodes: initialNodes, flowEdges: initialEdges } = useMemo(
     () => getLayoutedElements(data.nodes, data.links, []),
@@ -311,14 +328,35 @@ function InnerFlowMapGraph({ data, mapConfig, onNodeClick, onNodeRightClick }: F
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [dragChildren, setDragChildren] = useState(false);
+  const [addChildMode, setAddChildMode] = useState(false);
+
+  // Ref pro přístup k aktuálnímu stavu uvnitř useEffectu, který aktualizuje uzly z databáze
+  const addChildModeRef = useRef(addChildMode);
+  useEffect(() => {
+    addChildModeRef.current = addChildMode;
+  }, [addChildMode]);
 
   const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useDragWithChildren(dragChildren, data.nodes[0]?.map_id);
 
+  // Aktualizace uzlů při změně dat v DB (přidání uzlu apod.)
   useEffect(() => {
     const { flowNodes, flowEdges } = getLayoutedElements(data.nodes, data.links, []);
-    setNodes(flowNodes);
+    setNodes(flowNodes.map(n => ({
+      ...n,
+      data: { ...n.data, addChildMode: addChildModeRef.current } // Zde uchováme zapnutý režim
+    })));
     setEdges(flowEdges);
   }, [data, getLayoutedElements, setNodes, setEdges]);
+
+  // Synchronizace addChildMode s uzly při samotném přepnutí tlačítka
+  useEffect(() => {
+    setNodes((nds) => 
+      nds.map((n) => ({ 
+        ...n, 
+        data: { ...n.data, addChildMode } 
+      }))
+    );
+  }, [addChildMode, setNodes]);
 
   // Handler pro tlačítko "Přeskládat strom"
   const handleRetopology = useCallback(() => {
@@ -406,6 +444,14 @@ function InnerFlowMapGraph({ data, mapConfig, onNodeClick, onNodeRightClick }: F
               style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '14px', borderBottom: '1px solid #ccc' }}
             >
               🔗
+          </button>
+          <button 
+              className={`react-flow__controls-button ${addChildMode ? 'text-success bg-light' : 'text-muted'}`}
+              onClick={() => setAddChildMode(!addChildMode)}
+              title={addChildMode ? "Přidávání potomků ZAPNUTO" : "Přidávání potomků VYPNUTO"}
+              style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '14px', borderBottom: '1px solid #ccc' }}
+            >
+              ➕
           </button>
         </Controls>
         <MiniMap nodeColor="#495057" maskColor="rgba(0, 0, 0, 0.7)" />

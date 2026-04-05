@@ -28,11 +28,13 @@ export default function MindMapClient({ data, mapConfig, mapId }: MindMapClientP
   const [editingNode, setEditingNode] = useState<Node | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('edit');
+  const [initialParentId, setInitialParentId] = useState<string>('');
 
   useEffect(() => {
     const handleOpenAddNodeModal = () => {
       setModalMode('create');
       setEditingNode(null);
+      setInitialParentId('');
       setIsModalOpen(true);
     };
 
@@ -57,6 +59,7 @@ export default function MindMapClient({ data, mapConfig, mapId }: MindMapClientP
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingNode(null);
+    setInitialParentId('');
   };
 
   return (
@@ -73,6 +76,7 @@ export default function MindMapClient({ data, mapConfig, mapId }: MindMapClientP
         node={editingNode} 
         nodes={data.nodes}
         mapId={mapId}
+        initialParentId={initialParentId}
         onClose={handleCloseModal} 
       />
     </>

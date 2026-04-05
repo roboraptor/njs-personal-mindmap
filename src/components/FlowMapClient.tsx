@@ -19,11 +19,13 @@ export default function FlowMapClient({ data, mapConfig, mapId }: FlowMapClientP
   const [editingNode, setEditingNode] = useState<Node | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('edit');
+  const [initialParentId, setInitialParentId] = useState<string>('');
 
   useEffect(() => {
     const handleOpenAddNodeModal = () => {
       setModalMode('create');
       setEditingNode(null);
+      setInitialParentId('');
       setIsModalOpen(true);
     };
 
@@ -45,9 +47,17 @@ export default function FlowMapClient({ data, mapConfig, mapId }: FlowMapClientP
     }
   };
 
+  const handleAddChildClick = (parentNode: Node) => {
+    setModalMode('create');
+    setEditingNode(null);
+    setInitialParentId(parentNode.id);
+    setIsModalOpen(true);
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingNode(null);
+    setInitialParentId('');
   };
 
   return (
@@ -57,6 +67,7 @@ export default function FlowMapClient({ data, mapConfig, mapId }: FlowMapClientP
         mapConfig={mapConfig} 
         onNodeClick={handleNodeClick}
         onNodeRightClick={handleNodeRightClick}
+        onAddChildClick={handleAddChildClick}
       />
       <EditNodeModal 
         isOpen={isModalOpen}
@@ -64,6 +75,7 @@ export default function FlowMapClient({ data, mapConfig, mapId }: FlowMapClientP
         node={editingNode} 
         nodes={data.nodes}
         mapId={mapId}
+        initialParentId={initialParentId}
         onClose={handleCloseModal} 
       />
     </>
