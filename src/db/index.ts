@@ -8,7 +8,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 const dbPath = path.resolve(process.cwd(), 'mindmap.db');
 
 const sqlite = new Database(dbPath);
-sqlite.pragma('journal_mode = WAL');
+// sqlite.pragma('journal_mode = WAL');
 sqlite.pragma('foreign_keys = ON');
 
 export const db = drizzle(sqlite, { schema, logger: process.env.NODE_ENV === 'development' });
