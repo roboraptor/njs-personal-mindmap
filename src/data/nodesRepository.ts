@@ -24,8 +24,13 @@ async function update(id: string, data: Partial<Omit<Node, 'id' | 'created_at' |
     return updatedNode;
 }
 
+async function deleteById(id: string): Promise<void> {
+    await db.delete(nodes).where(eq(nodes.id, id));
+}
+
 export const nodesRepository = {
   getByMapId,
   create,
   update,
+  deleteById,
 };

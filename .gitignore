@@ -41,4 +41,5 @@ yarn-error.log*
 next-env.d.ts
 
 mindmap.db
+mindmap.db-shm
 mindmap.db-wal

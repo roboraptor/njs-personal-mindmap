@@ -165,7 +165,7 @@ const CustomNode = ({ data }: { data: any }) => {
             style={{ width: '20px', height: '20px', borderRadius: '50%', fontSize: '14px', lineHeight: '1', zIndex: 10 }}
             onClick={(e) => {
               e.stopPropagation();
-              data.onAddChildClick?.(data.node);
+              data.onAddChildClick?.(data.node, { x: data.computedX, y: data.computedY });
             }}
             title="Přidat potomka"
           >
@@ -211,7 +211,7 @@ interface FlowMapGraphProps {
   mapConfig: Pick<Map, 'gravity_strength' | 'repulsion_force' | 'friction'>;
   onNodeClick: (node: Node) => void;
   onNodeRightClick: (node: Node) => void;
-  onAddChildClick?: (node: Node) => void;
+  onAddChildClick?: (node: Node, position?: { x: number, y: number }) => void;
 }
 
 export default function FlowMapGraph(props: FlowMapGraphProps) {
@@ -310,6 +310,8 @@ function InnerFlowMapGraph({ data, mapConfig, onNodeClick, onNodeRightClick, onA
         dragHandle: '.custom-drag-handle', // ⬅️ Handle pro přetahování pomocí teček
         data: { 
           node: node, 
+          computedX: finalX,
+          computedY: finalY,
           onClick: onNodeClick, 
           onRightClick: onNodeRightClick,
           onAddChildClick: onAddChildClick

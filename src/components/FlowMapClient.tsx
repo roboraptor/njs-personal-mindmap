@@ -20,12 +20,14 @@ export default function FlowMapClient({ data, mapConfig, mapId }: FlowMapClientP
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('edit');
   const [initialParentId, setInitialParentId] = useState<string>('');
+  const [initialFlowPos, setInitialFlowPos] = useState<{x: number, y: number} | null>(null);
 
   useEffect(() => {
     const handleOpenAddNodeModal = () => {
       setModalMode('create');
       setEditingNode(null);
       setInitialParentId('');
+      setInitialFlowPos(null);
       setIsModalOpen(true);
     };
 
@@ -47,10 +49,15 @@ export default function FlowMapClient({ data, mapConfig, mapId }: FlowMapClientP
     }
   };
 
-  const handleAddChildClick = (parentNode: Node) => {
+  const handleAddChildClick = (parentNode: Node, position?: { x: number, y: number }) => {
     setModalMode('create');
     setEditingNode(null);
     setInitialParentId(parentNode.id);
+    if (position) {
+      setInitialFlowPos({ x: position.x, y: position.y + 100 });
+    } else {
+      setInitialFlowPos(null);
+    }
     setIsModalOpen(true);
   };
 
@@ -58,6 +65,7 @@ export default function FlowMapClient({ data, mapConfig, mapId }: FlowMapClientP
     setIsModalOpen(false);
     setEditingNode(null);
     setInitialParentId('');
+    setInitialFlowPos(null);
   };
 
   return (
@@ -76,6 +84,7 @@ export default function FlowMapClient({ data, mapConfig, mapId }: FlowMapClientP
         nodes={data.nodes}
         mapId={mapId}
         initialParentId={initialParentId}
+        initialFlowPos={initialFlowPos}
         onClose={handleCloseModal} 
       />
     </>

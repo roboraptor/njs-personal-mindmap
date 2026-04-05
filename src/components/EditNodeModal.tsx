@@ -1,6 +1,6 @@
 'use client';
 
-import { createNode, updateNode } from '@/actions/nodeActions';
+import { createNode, updateNode, deleteNodeOnly, deleteNodeWithChildren } from '@/actions/nodeActions';
 import type { Node } from '@/db/schema';
 import { useEffect, useState, useTransition } from 'react';
 
@@ -11,10 +11,11 @@ interface EditNodeModalProps {
   nodes: Node[];
   mapId: string;
   initialParentId?: string;
+  initialFlowPos?: { x: number, y: number } | null;
   onClose: () => void;
 }
 
-export default function EditNodeModal({ isOpen, mode, node, nodes, mapId, initialParentId, onClose }: EditNodeModalProps) {
+export default function EditNodeModal({ isOpen, mode, node, nodes, mapId, initialParentId, initialFlowPos, onClose }: EditNodeModalProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [displayType, setDisplayType] = useState('button');
@@ -57,16 +58,36 @@ export default function EditNodeModal({ isOpen, mode, node, nodes, mapId, initia
         setForceDistance(150.0);
         setForceAngle(0.0);
         setForceMass(1.0);
-        setFlowX(0.0);
-        setFlowY(0.0);
+        setFlowX(initialFlowPos ? initialFlowPos.x : 0.0);
+        setFlowY(initialFlowPos ? initialFlowPos.y : 0.0);
         setIsCollapsed(false);
         setStyleJson('');
         setSortOrder(0);
       }
     }
-  }, [isOpen, mode, node, initialParentId]);
+  }, [isOpen, mode, node, initialParentId, initialFlowPos]);
 
   if (!isOpen) return null;
+
+  const handleDeleteOnly = () => {
+    if (mode !== 'edit' || !node) return;
+    if (confirm('Opravdu chcete smazat tento uzel? Jeho potomci se automaticky přesunou pod nadřazený uzel.')) {
+      startTransition(async () => {
+        await deleteNodeOnly(node.id, mapId);
+        onClose();
+      });
+    }
+  };
+
+  const handleDeleteWithChildren = () => {
+    if (mode !== 'edit' || !node) return;
+    if (confirm('Opravdu chcete smazat tento uzel A VŠECHNY jeho potomky? Tuto akci nelze vrátit zpět.')) {
+      startTransition(async () => {
+        await deleteNodeWithChildren(node.id, mapId);
+        onClose();
+      });
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,11 +201,28 @@ export default function EditNodeModal({ isOpen, mode, node, nodes, mapId, initia
                 </div>
               </div>
             </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={onClose}>Zrušit</button>
-              <button type="submit" className="btn btn-primary" disabled={isPending}>
-                {isPending ? 'Ukládání...' : 'Uložit'}
-              </button>
+            <div className="modal-footer d-flex justify-content-between">
+              <div>
+                {/* Mazací tlačítka se zobrazí pouze při editaci existujícího uzlu */}
+                {mode === 'edit' && (
+                  <>
+                    <button type="button" className="btn btn-outline-danger me-2" onClick={handleDeleteOnly} disabled={isPending}>
+                      Smazat node
+                    </button>
+                    <button type="button" className="btn btn-danger" onClick={handleDeleteWithChildren} disabled={isPending}>
+                      Smazat s potomky
+                    </button>
+                  </>
+                )}
+              </div>
+              <div>
+                <button type="button" className="btn btn-secondary me-2" onClick={onClose} disabled={isPending}>
+                  Zrušit
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={isPending}>
+                  {isPending ? 'Ukládání...' : 'Uložit'}
+                </button>
+              </div>
             </div>
           </form>
         </div>

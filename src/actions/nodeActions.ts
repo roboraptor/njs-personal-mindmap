@@ -55,3 +55,33 @@ export async function updateNodePosition(nodeId: string, mapId: string, flow_x: 
     console.error('Chyba při aktualizaci pozice uzlu:', error);
   }
 }
+
+export async function deleteNodeWithChildren(nodeId: string, mapId: string) {
+    try {
+        await nodesRepository.deleteById(nodeId);
+        revalidatePath(`/maps/${mapId}`);
+        revalidatePath(`/flow/${mapId}`);
+    } catch (error) {
+        console.error('Chyba při mazání uzlu s potomky:', error);
+    }
+}
+
+export async function deleteNodeOnly(nodeId: string, mapId: string) {
+    try {
+        const allNodes = await nodesRepository.getByMapId(mapId);
+        const nodeToDelete = allNodes.find((n: Node) => n.id === nodeId);
+        
+        if (nodeToDelete) {
+            const children = allNodes.filter((n: Node) => n.parent_id === nodeId);
+            for (const child of children) {
+                await nodesRepository.update(child.id, { parent_id: nodeToDelete.parent_id });
+            }
+        }
+        
+        await nodesRepository.deleteById(nodeId);
+        revalidatePath(`/maps/${mapId}`);
+        revalidatePath(`/flow/${mapId}`);
+    } catch (error) {
+        console.error('Chyba při mazání samotného uzlu:', error);
+    }
+}
