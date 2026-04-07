@@ -1,4 +1,4 @@
-import { createDefaultMap } from '@/actions/mapActions';
+// import { createDefaultMap } from '@/actions/mapActions';
 import { mapsRepository } from '@/data/mapsRepository';
 import { redirect } from 'next/navigation';
 
@@ -12,15 +12,15 @@ export default async function HomePage() {
 
   // Pokud žádné mapy neexistují, spustíme akci, která vytvoří novou
   // a sama se postará o přesměrování.
-  await createDefaultMap();
+  // await createDefaultMap();
 
   // Tento kód by se neměl nikdy vykonat, protože akce `createDefaultMap`
   // vždy ukončí provádění přesměrováním.
   return (
     <main className="container mt-4 text-center">
-      <h1>Vítejte v PersonalMindMap!</h1>
+      <h1>Welcome to PersonalMindMap!</h1>
       <p className="lead mt-3">
-        Vytvářím pro vás první myšlenkovou mapu...
+        Go to Settings and create your First Personal MindMap...
       </p>
     </main>
   );

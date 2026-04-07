@@ -8,6 +8,7 @@ export default function SettingsSidebar() {
 
   const navItems = [
     { href: '/settings/maps', label: 'Správa map' },
+    { href: '/settings/scripts', label: 'Skripty' },
     // Zde můžeme v budoucnu přidat další položky
   ];
 

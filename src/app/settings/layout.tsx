@@ -7,6 +7,7 @@ export default function SettingsLayout({
 }) {
   return (
     <div className="container-fluid">
+      <h2 className="fw-bold">⚙️ Settings</h2>
       <div className="row">
         <div className="col-md-3 col-lg-2 p-0">
           <SettingsSidebar />
