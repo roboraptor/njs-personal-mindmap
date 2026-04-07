@@ -60,7 +60,7 @@ async function run() {
             id: subId,
             map_id: mapId,
             parent_id: catId,
-            title: `${cat.title} - Technologie ${i}`,
+            title: `${cat.title} - Technika ${i}`,
             force_distance: 80 + (i * 20), // Postupně se prodlužující uzly
             force_mass: 0.8,
             style_json: JSON.stringify({ linkColor: cat.color }), // Dědí barvu od rodiče
@@ -75,7 +75,7 @@ async function run() {
                     map_id: mapId,
                     parent_id: subId,
                     title: `Detail ${j}`,
-                    content: 'Nějaký delší popisek k této konkrétní technologii, abychom otestovali Collapsible uzel.',
+                    content: 'Nějaký delší popisek k této konkrétní technice, abychom otestovali Collapsible uzel.',
                     force_distance: 100,
                     force_mass: 0.5,
                     display_type: 'collapsible',
