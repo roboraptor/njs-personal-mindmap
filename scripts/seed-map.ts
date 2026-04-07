@@ -9,8 +9,8 @@ async function run() {
   // 1. Založíme mapu
   await db.insert(maps).values({
     id: mapId,
-    title: 'Velká rozsáhlá mapa',
-    description: 'Ukázka mapy pro test rozestupů a barviček.',
+    title: 'My Personal Map',
+    description: 'Vzor mapy pro ukázku rozestupů a barviček.',
     gravity_strength: 0.05,
     repulsion_force: 250, // Lehce vyšší odpor, aby měly větší větve místo
     friction: 0.9,
@@ -21,18 +21,18 @@ async function run() {
   await db.insert(nodes).values({
     id: rootId,
     map_id: mapId,
-    title: 'Centrum',
+    title: 'Já',
     force_mass: 3.0, // Nejtěžší bod uprostřed
     display_type: 'button',
-    flow_x: 400,
-    flow_y: 100,
+    flow_x: 0,
+    flow_y: 0,
   });
 
   // 3. Pár hlavních kategorií s různými styly a barvami
   const categories = [
-    { title: 'Backend', color: 'rgba(255, 99, 132, 0.8)' },
-    { title: 'Frontend', color: 'rgba(54, 162, 235, 0.8)' },
-    { title: 'DevOps', color: 'rgba(255, 206, 86, 0.8)' },
+    { title: 'Osobní rozvoj', color: 'rgba(255, 99, 132, 0.8)' },
+    { title: 'Mantry', color: 'rgba(54, 162, 235, 0.8)' },
+    { title: 'Plány', color: 'rgba(255, 206, 86, 0.8)' },
   ];
 
   let catX = 100;
