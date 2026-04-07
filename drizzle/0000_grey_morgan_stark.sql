@@ -1,16 +1,3 @@
-CREATE TABLE `cross_links` (
-	`id` text PRIMARY KEY NOT NULL,
-	`map_id` text NOT NULL,
-	`source_node_id` text NOT NULL,
-	`target_node_id` text NOT NULL,
-	`label` text,
-	`created_at` integer DEFAULT '"2026-04-01T21:00:55.543Z"',
-	`updated_at` integer DEFAULT '"2026-04-01T21:00:55.543Z"',
-	FOREIGN KEY (`map_id`) REFERENCES `maps`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`source_node_id`) REFERENCES `nodes`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`target_node_id`) REFERENCES `nodes`(`id`) ON UPDATE no action ON DELETE cascade
-);
---> statement-breakpoint
 CREATE TABLE `maps` (
 	`id` text PRIMARY KEY NOT NULL,
 	`title` text NOT NULL,
@@ -43,4 +30,17 @@ CREATE TABLE `nodes` (
 	`updated_at` integer DEFAULT '"2026-04-01T21:00:55.543Z"',
 	FOREIGN KEY (`map_id`) REFERENCES `maps`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`parent_id`) REFERENCES `nodes`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE TABLE `cross_links` (
+	`id` text PRIMARY KEY NOT NULL,
+	`map_id` text NOT NULL,
+	`source_node_id` text NOT NULL,
+	`target_node_id` text NOT NULL,
+	`label` text,
+	`created_at` integer DEFAULT '"2026-04-01T21:00:55.543Z"',
+	`updated_at` integer DEFAULT '"2026-04-01T21:00:55.543Z"',
+	FOREIGN KEY (`map_id`) REFERENCES `maps`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`source_node_id`) REFERENCES `nodes`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`target_node_id`) REFERENCES `nodes`(`id`) ON UPDATE no action ON DELETE cascade
 );
