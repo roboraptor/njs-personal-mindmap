@@ -11,8 +11,8 @@ function SubmitButton({ isEditing }: { isEditing: boolean }) {
     return (
         <button type="submit" className="btn btn-primary" disabled={pending}>
             {isEditing 
-                ? (pending ? 'Ukládání...' : 'Uložit změny')
-                : (pending ? 'Vytváření...' : 'Vytvořit mapu')}
+                ? (pending ? 'Saving...' : 'Save changes')
+                : (pending ? 'Creating...' : 'Create map')}
         </button>
     );
 }
@@ -37,7 +37,7 @@ export default function CreateMapForm({ mapToEdit }: CreateMapFormProps) {
         <form ref={formRef} action={formAction}>
             {isEditing && <input type="hidden" name="mapId" value={mapToEdit.id} />}
             <div className="mb-3">
-                <label htmlFor="title" className="form-label">Název mapy</label>
+                <label htmlFor="title" className="form-label">Name of the map</label>
                 <input 
                     type="text" 
                     className="form-control" 
@@ -48,7 +48,7 @@ export default function CreateMapForm({ mapToEdit }: CreateMapFormProps) {
                 />
             </div>
             <div className="mb-3">
-                <label htmlFor="description" className="form-label">Popis (volitelný)</label>
+                <label htmlFor="description" className="form-label">Description (optional)</label>
                 <textarea 
                     className="form-control" 
                     id="description" 

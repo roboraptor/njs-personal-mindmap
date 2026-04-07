@@ -10,7 +10,7 @@ async function run() {
   await db.insert(maps).values({
     id: mapId,
     title: 'My Personal Map',
-    description: 'Vzor mapy pro ukázku rozestupů a barviček.',
+    description: 'Example map from seed.',
     gravity_strength: 0.05,
     repulsion_force: 250, // Lehce vyšší odpor, aby měly větší větve místo
     friction: 0.9,

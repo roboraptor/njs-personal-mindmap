@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     const { script } = body;
 
     // Whitelist povolených skriptů pro bezpečnost
-    const validScripts = ['seed', 'clear', 'mydata'];
+    const validScripts = ['seed-map', 'clear', 'mydata'];
     
     if (!script || !validScripts.includes(script)) {
       return NextResponse.json({ error: 'Neplatný nebo nepovolený název skriptu.' }, { status: 400 });

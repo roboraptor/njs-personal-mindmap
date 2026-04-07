@@ -21,11 +21,11 @@ export default async function MapsSettingsPage({ searchParams }: MapsSettingsPag
 
   return (
     <div className="py-4">
-      <h2>Správa map</h2>
+      <h2>Maps Management</h2>
       
       <div className="card my-4">
         <div className="card-header">
-          {mapToEdit ? `Upravit mapu: ${mapToEdit.title}` : 'Vytvořit novou mapu'}
+          {mapToEdit ? `Edit map: ${mapToEdit.title}` : 'Create new map'}
         </div>
         <div className="card-body">
           <CreateMapForm mapToEdit={mapToEdit} />
@@ -34,7 +34,7 @@ export default async function MapsSettingsPage({ searchParams }: MapsSettingsPag
 
       <div className="card">
         <div className="card-header">
-          Seznam existujících map
+          List of existing maps
         </div>
         <ul className="list-group list-group-flush">
           {maps.map(map => (
@@ -45,20 +45,31 @@ export default async function MapsSettingsPage({ searchParams }: MapsSettingsPag
               </div>
               <div className="btn-group" role="group">
                 <Link href={`?edit=${map.id}`} className="btn btn-outline-secondary btn-sm">
-                  Upravit
+                  Edit
                 </Link>
                 <form action={deleteMap}>
                   <input type="hidden" name="mapId" value={map.id} />
                   <button type="submit" className="btn btn-outline-danger btn-sm">
-                    Smazat
+                    Delete
                   </button>
                 </form>
               </div>
             </li>
           ))}
-          {maps.length === 0 && <li className="list-group-item">Žádné mapy nebyly nalezeny.</li>}
+          {maps.length === 0 && <li className="list-group-item">No maps found.</li>}
         </ul>
       </div>
+
+      <div className="card my-4">
+        <div className="card-header">
+          Create my first map from the seed
+        </div>
+        <div className="card-body">
+          Go to the <Link href="/settings/scripts">Scripts</Link> page and click Seed. <br />
+          After you create the first map, please reload the page.
+        </div>
+      </div>
+
     </div>
   );
 }

@@ -26,12 +26,12 @@ export default function MapSelector({ maps }: MapSelectorProps) {
 
   return (
     <select 
-      className="form-select bg-dark text-light border-secondary" 
+      className="form-select me-2 bg-dark text-light border-secondary" 
       value={currentMap?.id || ''} 
       onChange={handleChange}
-      aria-label="Výběr mapy"
+      aria-label="Map selector"
     >
-      <option value="" disabled>Vybrat mapu...</option>
+      <option value="" disabled>Pick a map...</option>
       {maps.map(map => (
         <option key={map.id} value={map.id}>
           {map.title}

@@ -15,18 +15,18 @@ export default function ViewModeToggle() {
   const isFlow = pathname.startsWith('/flow/');
 
   return (
-    <div className="btn-group me-3 shadow-sm">
+    <div className="btn-group me-2 shadow-sm">
       <button 
-        className={`btn btn-sm ${!isFlow ? 'btn-primary' : 'btn-dark border-secondary'}`}
+        className={`btn  ${!isFlow ? 'btn-primary' : 'btn-dark border-secondary'}`}
         onClick={() => router.push(`/maps/${mapId}`)}
       >
-        Vesmír (Force)
+        Force
       </button>
       <button 
-        className={`btn btn-sm ${isFlow ? 'btn-primary' : 'btn-dark border-secondary'}`}
+        className={`btn  ${isFlow ? 'btn-primary' : 'btn-dark border-secondary'}`}
         onClick={() => router.push(`/flow/${mapId}`)}
       >
-        Strom (Flow)
+        Flow
       </button>
     </div>
   );

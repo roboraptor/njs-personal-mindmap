@@ -9,12 +9,15 @@ export default function SettingsPage() {
 
   return (
     <div className="py-4">
-      <h2>Skripty</h2>
+      <h2>Scripts</h2>
       
 
-      <div className="row">
+      <div className="card my-4">
+        <h5 className="card-header">Data management</h5>
+        <div className="card-body">
 
-<SourceSettings />
+        <SourceSettings />
+        </div>
 
       </div>
     </div>

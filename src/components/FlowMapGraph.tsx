@@ -460,12 +460,12 @@ function InnerFlowMapGraph({ data, mapConfig, onNodeClick, onNodeRightClick, onA
         <Background color="#495057" gap={16} />
         
         {/* Panel s tlačítky pro překreslení stromu a switchem */}
-        <Panel position="top-right" className="mt-3 me-3 d-flex flex-column gap-2">
+        <Panel position="top-right" className="mt-2 me-2 d-flex flex-column gap-2">
             <button className="btn btn-sm btn-info shadow" onClick={handleRetopology}>
-                🌳 Přeskládat (Strom)
+                🌳 ReTopology (Tree)
             </button>
             <button className="btn btn-sm btn-warning shadow" onClick={handleForceRetopology}>
-                🌌 Přeskládat (Vesmír)
+                🌌 Do you feel fancy?
             </button>
         </Panel>
       </ReactFlow>

@@ -14,12 +14,12 @@ export default async function Header() {
         <Link href="/" className="navbar-brand">
           PersonalMindMap
         </Link>
-        <div className="mx-auto">
+        <div className="mx-auto d-flex ">
           <MapSelector maps={maps} />
+          <ViewModeToggle />
         </div>
         <div className="ms-auto d-flex align-items-center">
           <HeaderAnalyzeAction />
-          <ViewModeToggle />
           <HeaderAddNodeAction />
           <Link href="/settings" className="btn btn-outline-secondary">
             Settings

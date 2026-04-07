@@ -7,8 +7,8 @@ export default function SettingsSidebar() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: '/settings/maps', label: 'Správa map' },
-    { href: '/settings/scripts', label: 'Skripty' },
+    { href: '/settings/maps', label: 'Maps Management' },
+    { href: '/settings/scripts', label: 'Scripts' },
     // Zde můžeme v budoucnu přidat další položky
   ];
 

@@ -7,43 +7,6 @@ export default function SourceSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetch('/api/config')
-      .then(res => res.json())
-      .then(data => {
-        if (data.dbPath) {
-          setDbPath(data.dbPath);
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
-  }, []);
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      const res = await fetch('/api/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dbPath })
-      });
-      
-      if (res.ok) {
-        alert('Cesta k databázi byla uložena. Pro projevení změn restartujte aplikaci.');
-      } else {
-        alert('Chyba při ukládání nastavení.');
-      }
-    } catch (error) {
-      console.error(error);
-      alert('Chyba při komunikaci se serverem.');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const runScript = async (scriptName: string) => {
     if (!confirm(`Opravdu chcete spustit skript "${scriptName}"? Tato akce může přepsat nebo smazat data v databázi!`)) {
@@ -73,19 +36,18 @@ export default function SourceSettings() {
     }
   };
 
-  if (loading) return <div>Načítání nastavení...</div>;
 
   return (
     <div>
       <div >
-        <hr className="my-4" />
+
         
-        <h5 className="mb-3">Správa dat (Skripty)</h5>
+        
         <div className="d-flex gap-2 flex-wrap">
             <button 
                 type="button" 
                 className="btn btn-warning" 
-                onClick={() => runScript('seed')}
+                onClick={() => runScript('seed-map')}
                 disabled={saving}
             >
                 <i className="bi bi-database-fill-down"></i> Seed (Reset DB)
