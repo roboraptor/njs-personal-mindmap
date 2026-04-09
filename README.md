@@ -15,6 +15,8 @@ A modern Next.js application designed to create, manage, and visualize personal 
 
 ## 🚀 How to Run the App Quickly
 
+On Windows or Mac you can use `Start-MindMap.bat` or `start.command`
+
 You only need a few simple commands to get the app running locally on your machine.
 
 ### 1. Install dependencies
@@ -22,14 +24,7 @@ You only need a few simple commands to get the app running locally on your machi
 npm install
 ```
 
-### 2. Initialize the Database & Add Sample Data
-This will create the local SQLite database (`mindmap.db`) and seed it with a beautiful sample map to test out the features.
-```bash
-npx drizzle-kit push
-npx tsx scripts/seed-map.ts
-```
-
-### 3. Start the Application
+### 2. Start the Application
 ```bash
 npm run dev
 ```
