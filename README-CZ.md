@@ -15,7 +15,7 @@ Moderní Next.js aplikace určená k vytváření, správě a vizualizaci osobn�
 
 ## 🚀 Jak aplikaci jednoduše spustit
 
-Na Windows nebo Macu můžete použít `Start-MindMap.bat` nebo `start.command` pro automatické spuštění.
+Na Windows nebo Macu můžete použít `ProjectRunner.bat` nebo `start.command` pro automatické spuštění.
 
 Ke spuštění celé aplikace u vás lokálně stačí tyto 3 rychlé kroky.
 

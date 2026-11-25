@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { generateAIPrompt } from '@/actions/aiActions';
+import { parseMapRoute } from '@/lib/mapPath';
 
 export default function HeaderAnalyzeAction() {
   const pathname = usePathname();
@@ -12,13 +13,12 @@ export default function HeaderAnalyzeAction() {
   const [copied, setCopied] = useState(false);
 
   // Ukázat tlačítko jen na detailu mapy nebo flow
-  const isMapPage = pathname?.startsWith('/maps/') || pathname?.startsWith('/flow/');
-  if (!isMapPage) {
+  const route = parseMapRoute(pathname);
+  if (!route) {
     return null;
   }
 
-  // Získání mapId z URL - např. z /maps/123 nebo /flow/123
-  const mapId = pathname.split('/')[2];
+  const { mapId } = route;
 
   const handleAnalyzeClick = async () => {
     setIsOpen(true);

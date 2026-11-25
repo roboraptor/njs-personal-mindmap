@@ -15,7 +15,7 @@ A modern Next.js application designed to create, manage, and visualize personal 
 
 ## 🚀 How to Run the App Quickly
 
-On Windows or Mac you can use `Start-MindMap.bat` or `start.command`
+On Windows or Mac you can use `ProjectRunner.bat` or `start.command`
 
 You only need a few simple commands to get the app running locally on your machine.
 

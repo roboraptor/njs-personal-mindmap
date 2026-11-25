@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import type { Map } from '@/db/schema';
+import { parseMapRoute } from '@/lib/mapPath';
 
 interface MapSelectorProps {
   maps: Map[];
@@ -12,10 +13,11 @@ export default function MapSelector({ maps }: MapSelectorProps) {
   const router = useRouter();
 
   if (maps.length === 0) {
-    return null; // or a placeholder
+    return null;
   }
 
-  const currentMap = maps.find(map => pathname.includes(map.id));
+  const route = parseMapRoute(pathname);
+  const currentMap = route ? maps.find(map => map.id === route.mapId) : undefined;
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedMapId = e.target.value;
@@ -25,9 +27,9 @@ export default function MapSelector({ maps }: MapSelectorProps) {
   };
 
   return (
-    <select 
-      className="form-select me-2 bg-dark text-light border-secondary" 
-      value={currentMap?.id || ''} 
+    <select
+      className="form-select me-2 bg-dark text-light border-secondary"
+      value={currentMap?.id || ''}
       onChange={handleChange}
       aria-label="Map selector"
     >

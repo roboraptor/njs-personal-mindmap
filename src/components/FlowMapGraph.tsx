@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -15,44 +15,86 @@ import {
   Panel,
   useReactFlow,
   ReactFlowProvider,
-  NodeDragHandler
+  type NodeProps,
+  type OnNodeDrag,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import type { Map, Node } from '@/db/schema';
 import dagre from 'dagre';
-import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } from 'd3-force';
+import {
+  forceSimulation,
+  forceLink,
+  forceManyBody,
+  forceCenter,
+  forceCollide,
+  type SimulationNodeDatum,
+  type SimulationLinkDatum,
+} from 'd3-force';
 
-import { updateNodePosition } from '@/actions/nodeActions';
+import { updateNodePositions } from '@/actions/nodeActions';
+import { getNodeLinkColor } from '@/lib/nodeStyle';
 import FloatingEdge from './FloatingEdge';
 
-// Pomocná funkce, která najde IDčka všech potomků (i těch hluboko zanořených)
-const getDescendants = (nodeId: string, edges: FlowEdge[]): string[] => {
+interface CustomNodeData extends Record<string, unknown> {
+  node: Node;
+  computedX: number;
+  computedY: number;
+  onClick: (node: Node) => void;
+  onRightClick: (node: Node) => void;
+  onAddChildClick?: (node: Node, position?: { x: number; y: number }) => void;
+}
+
+type MindMapFlowNode = FlowNode<CustomNodeData, 'custom'>;
+
+interface D3SimNode extends SimulationNodeDatum {
+  id: string;
+  x: number;
+  y: number;
+  mass: number;
+  width: number;
+  height: number;
+}
+
+interface D3SimLink extends SimulationLinkDatum<D3SimNode> {
+  source: string | D3SimNode;
+  target: string | D3SimNode;
+  distance: number;
+}
+
+const AddChildModeContext = createContext(false);
+
+// Pomocná funkce, která najde IDčka všech potomků (s ochranou proti cyklům)
+const getDescendants = (nodeId: string, edges: FlowEdge[], visited: Set<string> = new Set()): string[] => {
+  if (visited.has(nodeId)) return [];
+  visited.add(nodeId);
+
   const children = edges.filter((e) => e.source === nodeId).map((e) => e.target);
   return children.reduce((acc, childId) => {
-    return [...acc, childId, ...getDescendants(childId, edges)];
+    if (visited.has(childId)) return acc;
+    return [...acc, childId, ...getDescendants(childId, edges, visited)];
   }, [] as string[]);
 };
 
 // Chytrý hook pro tahání uzlů s celou rodinou
 const useDragWithChildren = (isDragToggledOn: boolean, mapId: string) => {
-  const { getNodes, getEdges, setNodes } = useReactFlow();
-  
+  const { getNodes, getEdges, setNodes } = useReactFlow<MindMapFlowNode, FlowEdge>();
+
   // Zapamatujeme si původní pozice předtím, než začneme myší tahat
   const dragStartPositions = useRef<Record<string, { x: number; y: number }> | null>(null);
 
-  const onNodeDragStart: NodeDragHandler = useCallback(
+  const onNodeDragStart: OnNodeDrag<MindMapFlowNode> = useCallback(
     (_, node) => {
       if (!isDragToggledOn) return;
 
       const edges = getEdges();
       const nodes = getNodes();
       const descendantIds = getDescendants(node.id, edges);
-      
+
       const startPositions: Record<string, { x: number; y: number }> = {};
-      
+
       // Uložíme si původní pozici rodiče
       startPositions[node.id] = { ...node.position };
-      
+
       // Uložíme si pozici každého nalezeného potomka
       descendantIds.forEach((id) => {
         const descendant = nodes.find((n) => n.id === id);
@@ -60,16 +102,16 @@ const useDragWithChildren = (isDragToggledOn: boolean, mapId: string) => {
           startPositions[id] = { ...descendant.position };
         }
       });
-      
+
       dragStartPositions.current = startPositions;
     },
     [isDragToggledOn, getEdges, getNodes]
   );
 
-  const onNodeDrag: NodeDragHandler = useCallback(
+  const onNodeDrag: OnNodeDrag<MindMapFlowNode> = useCallback(
     (_, node) => {
       if (!isDragToggledOn || !dragStartPositions.current) return;
-      
+
       const parentStartPos = dragStartPositions.current[node.id];
       if (!parentStartPos) return;
 
@@ -100,67 +142,72 @@ const useDragWithChildren = (isDragToggledOn: boolean, mapId: string) => {
     [isDragToggledOn, setNodes]
   );
 
-  const onNodeDragStop: NodeDragHandler = useCallback((event, node) => {
-    // 1. Zjistíme, jestli se táhlo s celou rodinou a máme souřadnice
-    if (isDragToggledOn && dragStartPositions.current) {
+  const onNodeDragStop: OnNodeDrag<MindMapFlowNode> = useCallback(
+    (_event, node) => {
+      if (isDragToggledOn && dragStartPositions.current) {
         const nodes = getNodes();
-        // Všechny uzly, co jsme potáhli (děti + rodič), uložíme do Databáze
-        Object.keys(dragStartPositions.current).forEach(id => {
-            const finalNode = nodes.find(n => n.id === id);
-            if (finalNode) {
-                updateNodePosition(finalNode.id, mapId, finalNode.position.x, finalNode.position.y);
-            }
-        });
-    } else {
-        // Tahali jsme jen samotný jeden uzel
-        updateNodePosition(node.id, mapId, node.position.x, node.position.y);
-    }
-    
-    // Uklidíme paměť
-    dragStartPositions.current = null;
-  }, [isDragToggledOn, getNodes, mapId]);
+        const updates = Object.keys(dragStartPositions.current)
+          .map((id) => nodes.find((n) => n.id === id))
+          .filter((n): n is MindMapFlowNode => Boolean(n))
+          .map((finalNode) => ({
+            id: finalNode.id,
+            flow_x: finalNode.position.x,
+            flow_y: finalNode.position.y,
+          }));
+        updateNodePositions(mapId, updates);
+      } else {
+        updateNodePositions(mapId, [
+          { id: node.id, flow_x: node.position.x, flow_y: node.position.y },
+        ]);
+      }
+
+      dragStartPositions.current = null;
+    },
+    [isDragToggledOn, getNodes, mapId]
+  );
 
   return { onNodeDragStart, onNodeDrag, onNodeDragStop };
 };
 
 // --- CUSTOM UZEL PRO REACT FLOW ---
-const CustomNode = ({ data }: { data: any }) => {
+const CustomNode = ({ data }: NodeProps<MindMapFlowNode>) => {
+  const addChildMode = useContext(AddChildModeContext);
   const isCollapsible = data.node.display_type === 'collapsible';
   const isCollapsed = data.node.is_collapsed;
 
   return (
-    <div 
+    <div
       className="card bg-dark text-light border-secondary shadow-sm"
       style={{ minWidth: '150px' }}
     >
       {/* Skryté handly pro floating edges */}
       <Handle type="target" position={Position.Top} className="bg-transparent border-0" style={{ pointerEvents: 'none' }} />
-      
+
       <div className="card-body p-0 d-flex align-items-center">
         {/* DRAG HANDLE IKONA VLEVO */}
-        <div 
-          className="custom-drag-handle d-flex justify-content-center align-items-center me-1" 
+        <div
+          className="custom-drag-handle d-flex justify-content-center align-items-center me-1"
           style={{ cursor: 'move', width: '20px', height: '36px', borderRight: '0px solid #495057' }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
             <div style={{ display: 'flex', gap: '3px' }}>
-               <div style={{ width: '4px', height: '4px', backgroundColor: '#6c757d', borderRadius: '50%' }}></div>
-               <div style={{ width: '4px', height: '4px', backgroundColor: '#6c757d', borderRadius: '50%' }}></div>
+              <div style={{ width: '4px', height: '4px', backgroundColor: '#6c757d', borderRadius: '50%' }}></div>
+              <div style={{ width: '4px', height: '4px', backgroundColor: '#6c757d', borderRadius: '50%' }}></div>
             </div>
             <div style={{ display: 'flex', gap: '3px' }}>
-               <div style={{ width: '4px', height: '4px', backgroundColor: '#6c757d', borderRadius: '50%' }}></div>
-               <div style={{ width: '4px', height: '4px', backgroundColor: '#6c757d', borderRadius: '50%' }}></div>
+              <div style={{ width: '4px', height: '4px', backgroundColor: '#6c757d', borderRadius: '50%' }}></div>
+              <div style={{ width: '4px', height: '4px', backgroundColor: '#6c757d', borderRadius: '50%' }}></div>
             </div>
             <div style={{ display: 'flex', gap: '3px' }}>
-               <div style={{ width: '4px', height: '4px', backgroundColor: '#6c757d', borderRadius: '50%' }}></div>
-               <div style={{ width: '4px', height: '4px', backgroundColor: '#6c757d', borderRadius: '50%' }}></div>
+              <div style={{ width: '4px', height: '4px', backgroundColor: '#6c757d', borderRadius: '50%' }}></div>
+              <div style={{ width: '4px', height: '4px', backgroundColor: '#6c757d', borderRadius: '50%' }}></div>
             </div>
           </div>
         </div>
 
         {/* [+] TLAČÍTKO PRO PŘIDÁNÍ POTOMKA */}
-        {data.addChildMode && (
-          <button 
+        {addChildMode && (
+          <button
             className="btn btn-sm btn-success p-0 d-flex justify-content-center align-items-center me-2"
             style={{ width: '20px', height: '20px', borderRadius: '50%', fontSize: '14px', lineHeight: '1', zIndex: 10 }}
             onClick={(e) => {
@@ -174,23 +221,23 @@ const CustomNode = ({ data }: { data: any }) => {
         )}
 
         {/* SAMOTNÝ TITULEK A AKCE PRO KLIKNUTÍ (MODÁL) */}
-        <div 
+        <div
           className="flex-grow-1 d-flex align-items-center"
           style={{ cursor: 'pointer' }}
           onClick={() => data.onClick(data.node)}
         >
-            {isCollapsible && (
-              <button 
-                className="btn btn-sm btn-outline-secondary me-2 p-0 px-1"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  data.onRightClick(data.node);
-                }}
-              >
-                {isCollapsed ? '▼' : '▲'}
-              </button>
-            )}
-            <span className="fw-bold fs-6" style={{ paddingRight: 8 }} >{data.node.title}</span>
+          {isCollapsible && (
+            <button
+              className="btn btn-sm btn-outline-secondary me-2 p-0 px-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                data.onRightClick(data.node);
+              }}
+            >
+              {isCollapsed ? '▼' : '▲'}
+            </button>
+          )}
+          <span className="fw-bold fs-6" style={{ paddingRight: 8 }}>{data.node.title}</span>
         </div>
       </div>
       {isCollapsible && !isCollapsed && data.node.content && (
@@ -209,9 +256,10 @@ interface FlowMapGraphProps {
     links: { source: string; target: string }[];
   };
   mapConfig: Pick<Map, 'gravity_strength' | 'repulsion_force' | 'friction'>;
+  mapId: string;
   onNodeClick: (node: Node) => void;
   onNodeRightClick: (node: Node) => void;
-  onAddChildClick?: (node: Node, position?: { x: number, y: number }) => void;
+  onAddChildClick?: (node: Node, position?: { x: number; y: number }) => void;
 }
 
 export default function FlowMapGraph(props: FlowMapGraphProps) {
@@ -222,190 +270,166 @@ export default function FlowMapGraph(props: FlowMapGraphProps) {
   );
 }
 
-function InnerFlowMapGraph({ data, mapConfig, onNodeClick, onNodeRightClick, onAddChildClick }: FlowMapGraphProps) {
-  // --- LAYOUTOVÁNÍ POMOCÍ DAGRE ---
+function InnerFlowMapGraph({ data, mapConfig, mapId, onNodeClick, onNodeRightClick, onAddChildClick }: FlowMapGraphProps) {
   const nodeTypes = useMemo(() => ({ custom: CustomNode }), []);
   const edgeTypes = useMemo(() => ({ floating: FloatingEdge }), []);
 
-  const getLayoutedElements = useCallback((nodes: Node[], links: { source: string; target: string }[], flowStateNodes: FlowNode[] = [], forceRecalculate: boolean = false) => {
-    const dagreGraph = new dagre.graphlib.Graph();
-    dagreGraph.setDefaultEdgeLabel(() => ({}));
-    dagreGraph.setGraph({ rankdir: 'TB', ranksep: 100, nodesep: 50 });
+  const getLayoutedElements = useCallback(
+    (
+      nodes: Node[],
+      links: { source: string; target: string }[],
+      flowStateNodes: MindMapFlowNode[] = [],
+      forceRecalculate: boolean = false
+    ) => {
+      const dagreGraph = new dagre.graphlib.Graph();
+      dagreGraph.setDefaultEdgeLabel(() => ({}));
+      dagreGraph.setGraph({ rankdir: 'TB', ranksep: 100, nodesep: 50 });
 
-    const flowNodes: FlowNode[] = [];
-    const flowEdges: FlowEdge[] = [];
+      const flowNodes: MindMapFlowNode[] = [];
+      const flowEdges: FlowEdge[] = [];
 
-    // Naplníme hrany
-    links.forEach((link, index) => {
-      const edgeId = `e-${link.source}-${link.target}-${index}`;
-      
-      const targetNode = nodes.find(n => n.id === link.target);
-      let linkColor = '#6c757d'; 
-      if (targetNode?.style_json) {
-        try {
-          const styles = JSON.parse(targetNode.style_json);
-          if (styles.linkColor) linkColor = styles.linkColor;
-        } catch (e) {}
-      }
+      // Naplníme hrany
+      links.forEach((link, index) => {
+        const edgeId = `e-${link.source}-${link.target}-${index}`;
+        const targetNode = nodes.find(n => n.id === link.target);
+        const linkColor = getNodeLinkColor(targetNode?.style_json, '#6c757d');
 
-      flowEdges.push({
-        id: edgeId,
-        source: link.source,
-        target: link.target,
-        type: 'floating', // Custom floating edge místo defaultu
-        animated: true,
-        style: { stroke: linkColor, strokeWidth: 2 },
+        flowEdges.push({
+          id: edgeId,
+          source: link.source,
+          target: link.target,
+          type: 'floating',
+          animated: true,
+          style: { stroke: linkColor, strokeWidth: 2 },
+        });
+        dagreGraph.setEdge(link.source, link.target);
       });
-      dagreGraph.setEdge(link.source, link.target);
-    });
 
-    // Naplníme uzly
-    nodes.forEach((node) => {
-      // 1. Zkusíme zjistit reálnou velikost z React Flow state (pokud už byly vyrenderované)
-      const existingStateNode = flowStateNodes.find(n => n.id === node.id);
-      
-      let width = 150;
-      let height = 50;
+      // Naplníme uzly
+      nodes.forEach((node) => {
+        const existingStateNode = flowStateNodes.find(n => n.id === node.id);
 
-      if (existingStateNode?.measured?.width && existingStateNode?.measured?.height) {
-         // Použijeme skutečně změřenou velikost z DOM
-         width = existingStateNode.measured.width;
-         height = existingStateNode.measured.height;
-      } else {
-         // 2. Fallback: Hrubý odhad
-         // Přibližně 8 pixelů na znak pro titulek
-         const estimatedTitleWidth = (node.title?.length || 0) * 8 + 40; 
-         width = Math.max(150, estimatedTitleWidth);
-         
-         if (node.display_type === 'collapsible' && !node.is_collapsed) {
-             const lines = (node.content?.length || 0) / 40; // zhruba 40 znaků na řádek
-             height = 60 + (Math.ceil(lines) * 20);
-         }
-      }
+        let width = 150;
+        let height = 50;
 
-      dagreGraph.setNode(node.id, { width, height });
-    });
+        if (existingStateNode?.measured?.width && existingStateNode?.measured?.height) {
+          width = existingStateNode.measured.width;
+          height = existingStateNode.measured.height;
+        } else {
+          const estimatedTitleWidth = (node.title?.length || 0) * 8 + 40;
+          width = Math.max(150, estimatedTitleWidth);
 
-    // Provedeme výpočet
-    dagre.layout(dagreGraph);
+          if (node.display_type === 'collapsible' && !node.is_collapsed) {
+            const lines = (node.content?.length || 0) / 40;
+            height = 60 + (Math.ceil(lines) * 20);
+          }
+        }
 
-    // Přiřadíme vypočtené pozice, pokud nemá Flow uzel už přiřazené vlastní souřadnice
-    nodes.forEach((node) => {
-      const nodeWithPosition = dagreGraph.node(node.id);
-      
-      // Pokud nevynucujeme přepočet a máme pozici v databázi, použijeme ji. Jinak Dagre výpočet.
-      const useStoredX = !forceRecalculate && node.flow_x !== null;
-      const useStoredY = !forceRecalculate && node.flow_y !== null;
-
-      const finalX = useStoredX ? node.flow_x! : nodeWithPosition.x - nodeWithPosition.width / 2;
-      const finalY = useStoredY ? node.flow_y! : nodeWithPosition.y - nodeWithPosition.height / 2;
-
-      flowNodes.push({
-        id: node.id,
-        type: 'custom',
-        position: {
-          x: finalX,
-          y: finalY,
-        },
-        dragHandle: '.custom-drag-handle', // ⬅️ Handle pro přetahování pomocí teček
-        data: { 
-          node: node, 
-          computedX: finalX,
-          computedY: finalY,
-          onClick: onNodeClick, 
-          onRightClick: onNodeRightClick,
-          onAddChildClick: onAddChildClick
-        },
+        dagreGraph.setNode(node.id, { width, height });
       });
-    });
 
-    return { flowNodes, flowEdges };
-  }, [onNodeClick, onNodeRightClick, onAddChildClick]);
+      dagre.layout(dagreGraph);
+
+      // Přiřadíme vypočtené pozice, pokud nemá Flow uzel už přiřazené vlastní souřadnice
+      nodes.forEach((node) => {
+        const nodeWithPosition = dagreGraph.node(node.id);
+
+        const useStoredX = !forceRecalculate && node.flow_x !== null;
+        const useStoredY = !forceRecalculate && node.flow_y !== null;
+
+        const finalX = useStoredX ? node.flow_x! : nodeWithPosition.x - nodeWithPosition.width / 2;
+        const finalY = useStoredY ? node.flow_y! : nodeWithPosition.y - nodeWithPosition.height / 2;
+
+        flowNodes.push({
+          id: node.id,
+          type: 'custom',
+          position: {
+            x: finalX,
+            y: finalY,
+          },
+          dragHandle: '.custom-drag-handle',
+          data: {
+            node,
+            computedX: finalX,
+            computedY: finalY,
+            onClick: onNodeClick,
+            onRightClick: onNodeRightClick,
+            onAddChildClick,
+          },
+        });
+      });
+
+      return { flowNodes, flowEdges };
+    },
+    [onNodeClick, onNodeRightClick, onAddChildClick]
+  );
 
   const { flowNodes: initialNodes, flowEdges: initialEdges } = useMemo(
     () => getLayoutedElements(data.nodes, data.links, []),
     [data, getLayoutedElements]
   );
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState<MindMapFlowNode>(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>(initialEdges);
   const [dragChildren, setDragChildren] = useState(false);
   const [addChildMode, setAddChildMode] = useState(false);
 
-  // Ref pro přístup k aktuálnímu stavu uvnitř useEffectu, který aktualizuje uzly z databáze
-  const addChildModeRef = useRef(addChildMode);
+  const isFirstRender = useRef(true);
   useEffect(() => {
-    addChildModeRef.current = addChildMode;
-  }, [addChildMode]);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  }, [initialNodes, initialEdges, setNodes, setEdges]);
 
-  const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useDragWithChildren(dragChildren, data.nodes[0]?.map_id);
-
-  // Aktualizace uzlů při změně dat v DB (přidání uzlu apod.)
-  useEffect(() => {
-    const { flowNodes, flowEdges } = getLayoutedElements(data.nodes, data.links, []);
-    setNodes(flowNodes.map(n => ({
-      ...n,
-      data: { ...n.data, addChildMode: addChildModeRef.current } // Zde uchováme zapnutý režim
-    })));
-    setEdges(flowEdges);
-  }, [data, getLayoutedElements, setNodes, setEdges]);
-
-  // Synchronizace addChildMode s uzly při samotném přepnutí tlačítka
-  useEffect(() => {
-    setNodes((nds) => 
-      nds.map((n) => ({ 
-        ...n, 
-        data: { ...n.data, addChildMode } 
-      }))
-    );
-  }, [addChildMode, setNodes]);
+  const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useDragWithChildren(dragChildren, mapId);
 
   // Handler pro tlačítko "Přeskládat strom"
   const handleRetopology = useCallback(() => {
-    // Zavoláme layout funkci a vynutíme, aby ignorovala DB souřadnice
     const { flowNodes, flowEdges } = getLayoutedElements(data.nodes, data.links, nodes, true);
     setNodes(flowNodes);
     setEdges(flowEdges);
 
-    // Abychom zachovali tento nový layout, propíšeme nově spočítané souřadnice zpět do databáze
-    flowNodes.forEach(node => {
-        updateNodePosition(node.id, data.nodes[0]?.map_id, node.position.x, node.position.y);
-    });
-  }, [data, nodes, getLayoutedElements, setNodes, setEdges]);
+    updateNodePositions(
+      mapId,
+      flowNodes.map(node => ({
+        id: node.id,
+        flow_x: node.position.x,
+        flow_y: node.position.y,
+      }))
+    );
+  }, [data, mapId, nodes, getLayoutedElements, setNodes, setEdges]);
 
   // Handler pro tlačítko "Přeskládat vesmír (D3)"
   const handleForceRetopology = useCallback(() => {
-    // Připravíme uzly pro D3, zkusíme využít i jejich reálné rozměry pro forceCollide
-    const d3Nodes = nodes.map(n => ({
+    const d3Nodes: D3SimNode[] = nodes.map(n => ({
       id: n.id,
       x: n.position.x,
       y: n.position.y,
       mass: n.data.node.force_mass ?? 1.0,
       width: n.measured?.width ?? 150,
-      height: n.measured?.height ?? 50
+      height: n.measured?.height ?? 50,
     }));
 
-    // Připravíme vazby
-    const d3Links = data.links.map(l => ({
+    const d3Links: D3SimLink[] = data.links.map(l => ({
       source: l.source,
       target: l.target,
-      distance: data.nodes.find(dn => dn.id === l.target)?.force_distance ?? 150
+      distance: data.nodes.find(dn => dn.id === l.target)?.force_distance ?? 150,
     }));
 
-    // Vytvoříme a nastavíme simulaci podle fyzikálních hodnot z DB + Kolize s ohledem na velikost krabiček
-    const simulation = forceSimulation(d3Nodes as any)
-      .force('charge', forceManyBody().strength((d: any) => (mapConfig.repulsion_force ?? 100) * -1 * d.mass))
+    const simulation = forceSimulation<D3SimNode>(d3Nodes)
+      .force('charge', forceManyBody<D3SimNode>().strength(d => (mapConfig.repulsion_force ?? 100) * -1 * d.mass))
       .force('center', forceCenter(0, 0).strength(mapConfig.gravity_strength ?? 0.05))
-      .force('link', forceLink(d3Links).id((d: any) => d.id).distance((d: any) => d.distance))
-      .force('collide', forceCollide().radius((d: any) => Math.max(d.width, d.height) / 2 + 20).iterations(2))
+      .force('link', forceLink<D3SimNode, D3SimLink>(d3Links).id(d => d.id).distance(d => d.distance))
+      .force('collide', forceCollide<D3SimNode>().radius(d => Math.max(d.width, d.height) / 2 + 20).iterations(2))
       .stop();
 
-    // Spočítáme finální pozice synchronně (uděláme 300 kroků simulace na pozadí)
     for (let i = 0; i < 300; i++) {
       simulation.tick();
     }
 
-    // Aplikujeme nově vypočtené pozice na stávající flow nodes
     const newNodes = nodes.map(n => {
       const d3n = d3Nodes.find(d => d.id === n.id);
       if (d3n && d3n.x !== undefined && d3n.y !== undefined) {
@@ -416,59 +440,65 @@ function InnerFlowMapGraph({ data, mapConfig, onNodeClick, onNodeRightClick, onA
 
     setNodes(newNodes);
 
-    // Zapíšeme nové pozice rovnou do DB
-    newNodes.forEach(node => {
-        updateNodePosition(node.id, data.nodes[0]?.map_id, node.position.x, node.position.y);
-    });
-  }, [nodes, data, mapConfig, setNodes]);
+    updateNodePositions(
+      mapId,
+      newNodes.map(node => ({
+        id: node.id,
+        flow_x: node.position.x,
+        flow_y: node.position.y,
+      }))
+    );
+  }, [nodes, data, mapConfig, mapId, setNodes]);
 
   return (
-    <div style={{ width: '100%', height: 'calc(100vh - 56px)' }} className="react-flow-dark">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeDragStart={onNodeDragStart}
-        onNodeDrag={onNodeDrag}
-        onNodeDragStop={onNodeDragStop}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        fitView
-        colorMode="dark"
-        minZoom={0.1}
-      >
-        <Controls>
-          <button 
+    <AddChildModeContext.Provider value={addChildMode}>
+      <div style={{ width: '100%', height: 'calc(100vh - 56px)' }} className="react-flow-dark">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodeDragStart={onNodeDragStart}
+          onNodeDrag={onNodeDrag}
+          onNodeDragStop={onNodeDragStop}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          fitView
+          colorMode="dark"
+          minZoom={0.1}
+        >
+          <Controls>
+            <button
               className={`react-flow__controls-button ${dragChildren ? 'text-primary bg-light' : 'text-muted'}`}
               onClick={() => setDragChildren(!dragChildren)}
-              title={dragChildren ? "Přesouvání větve ZAPNUTO" : "Přesouvání větve VYPNUTO"}
+              title={dragChildren ? 'Přesouvání větve ZAPNUTO' : 'Přesouvání větve VYPNUTO'}
               style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '14px', borderBottom: '1px solid #ccc' }}
             >
               🔗
-          </button>
-          <button 
+            </button>
+            <button
               className={`react-flow__controls-button ${addChildMode ? 'text-success bg-light' : 'text-muted'}`}
               onClick={() => setAddChildMode(!addChildMode)}
-              title={addChildMode ? "Přidávání potomků ZAPNUTO" : "Přidávání potomků VYPNUTO"}
+              title={addChildMode ? 'Přidávání potomků ZAPNUTO' : 'Přidávání potomků VYPNUTO'}
               style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '14px', borderBottom: '1px solid #ccc' }}
             >
               ➕
-          </button>
-        </Controls>
-        <MiniMap nodeColor="#495057" maskColor="rgba(0, 0, 0, 0.7)" />
-        <Background color="#495057" gap={16} />
-        
-        {/* Panel s tlačítky pro překreslení stromu a switchem */}
-        <Panel position="top-right" className="mt-2 me-2 d-flex flex-column gap-2">
+            </button>
+          </Controls>
+          <MiniMap nodeColor="#495057" maskColor="rgba(0, 0, 0, 0.7)" />
+          <Background color="#495057" gap={16} />
+
+          {/* Panel s tlačítky pro překreslení stromu a switchem */}
+          <Panel position="top-right" className="mt-2 me-2 d-flex flex-column gap-2">
             <button className="btn btn-sm btn-info shadow" onClick={handleRetopology}>
-                🌳 ReTopology (Tree)
+              🌳 ReTopology (Tree)
             </button>
             <button className="btn btn-sm btn-warning shadow" onClick={handleForceRetopology}>
-                🌌 Do you feel fancy?
+              🌌 Do you feel fancy?
             </button>
-        </Panel>
-      </ReactFlow>
-    </div>
+          </Panel>
+        </ReactFlow>
+      </div>
+    </AddChildModeContext.Provider>
   );
 }

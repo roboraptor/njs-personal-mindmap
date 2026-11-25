@@ -1,12 +1,13 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { parseMapRoute } from '@/lib/mapPath';
 
 export default function HeaderAddNodeAction() {
   const pathname = usePathname();
 
   // Zobrazit tlačítko pouze na stránce detailu mapy nebo flow stromu
-  if (!pathname?.startsWith('/maps/') && !pathname?.startsWith('/flow/')) {
+  if (!parseMapRoute(pathname)) {
     return null;
   }
 

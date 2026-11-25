@@ -24,6 +24,21 @@ async function update(id: string, data: Partial<Omit<Node, 'id' | 'created_at' |
     return updatedNode;
 }
 
+async function updatePositions(
+  updates: Array<{ id: string; flow_x: number; flow_y: number }>
+): Promise<void> {
+  if (updates.length === 0) return;
+  const now = new Date();
+  db.transaction((tx) => {
+    for (const u of updates) {
+      tx.update(nodes)
+        .set({ flow_x: u.flow_x, flow_y: u.flow_y, updated_at: now })
+        .where(eq(nodes.id, u.id))
+        .run();
+    }
+  });
+}
+
 async function deleteById(id: string): Promise<void> {
     await db.delete(nodes).where(eq(nodes.id, id));
 }
@@ -32,5 +47,6 @@ export const nodesRepository = {
   getByMapId,
   create,
   update,
+  updatePositions,
   deleteById,
 };

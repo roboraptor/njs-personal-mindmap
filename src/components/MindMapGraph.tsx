@@ -1,16 +1,24 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef } from 'react';
-import ForceGraph2D, { ForceGraphMethods, NodeObject } from 'react-force-graph-2d';
+import ForceGraph2D, { ForceGraphMethods, LinkObject, NodeObject } from 'react-force-graph-2d';
 import type { Map, Node } from '@/db/schema';
+import { getNodeLinkColor } from '@/lib/nodeStyle';
+
+interface NodeBckgDimensions {
+  width: number;
+  height: number;
+  arrowSpace: number;
+}
 
 // Rozšíření typu uzlu pro potřeby grafu
-interface GraphNode extends Node, NodeObject {}
+type GraphNode = Node & NodeObject & { __bckgDimensions?: NodeBckgDimensions };
+type GraphLink = LinkObject<GraphNode>;
 
 interface MindMapGraphProps {
   data: {
     nodes: GraphNode[];
-    links: { source: string; target: string | any }[];
+    links: { source: string; target: string }[];
   };
   mapConfig: Pick<Map, 'gravity_strength' | 'repulsion_force' | 'friction'>;
   onNodeClick: (node: Node) => void;
@@ -18,21 +26,26 @@ interface MindMapGraphProps {
 }
 
 const MindMapGraph: React.FC<MindMapGraphProps> = ({ data, mapConfig, onNodeClick, onNodeRightClick }) => {
-  const fgRef = useRef<ForceGraphMethods>();
+  const fgRef = useRef<
+    ForceGraphMethods<NodeObject<GraphNode>, LinkObject<GraphNode, { source: string; target: string }>> | undefined
+  >(undefined);
   const isInitialCenterDone = useRef(false);
 
   useEffect(() => {
     const fg = fgRef.current;
     if (fg) {
       // Nastavení fyziky grafu s přihlédnutím k váze uzlu (mass)
-      fg.d3Force('charge')?.strength((node: any) => {
+      fg.d3Force('charge')?.strength((node: GraphNode) => {
         return (mapConfig.repulsion_force ?? 100) * -1 * (node.force_mass ?? 1.0);
       });
       fg.d3Force('center')?.strength(mapConfig.gravity_strength ?? 0.05);
 
       // Aplikace vzdálenosti (distance) definované v cílovém uzlu
-      fg.d3Force('link')?.distance((link: any) => {
-        return link.target?.force_distance ?? 150;
+      fg.d3Force('link')?.distance((link: GraphLink) => {
+        if (typeof link.target === 'object' && link.target !== null) {
+          return link.target.force_distance ?? 150;
+        }
+        return 150;
       });
 
       fg.d3ReheatSimulation();
@@ -43,7 +56,7 @@ const MindMapGraph: React.FC<MindMapGraphProps> = ({ data, mapConfig, onNodeClic
   const nodeCanvasObject = useCallback((node: NodeObject, ctx: CanvasRenderingContext2D, globalScale: number) => {
     const graphNode = node as GraphNode;
     const label = graphNode.title;
-    
+
     // --- Constants ---
     const fontSize = 12 / globalScale;
     const padding = fontSize * 0.5;
@@ -55,35 +68,35 @@ const MindMapGraph: React.FC<MindMapGraphProps> = ({ data, mapConfig, onNodeClic
     ctx.font = `600 ${fontSize}px Sans-Serif`; // Bold font for title
     const titleWidth = ctx.measureText(label).width;
     const arrowSpace = graphNode.display_type === 'collapsible' ? fontSize * 1.5 : 0;
-    
+
     let contentHeight = 0;
-    let contentLines: string[] = [];
+    const contentLines: string[] = [];
     // Max width for content is based on title area
-    const maxContentWidth = titleWidth + padding * 2; 
+    const maxContentWidth = titleWidth + padding * 2;
 
     if (graphNode.display_type === 'collapsible' && !graphNode.is_collapsed && graphNode.content) {
-        ctx.font = `${fontSize * 0.8}px Sans-Serif`; // Smaller font for content
-        const words = graphNode.content.split(' ');
-        let line = '';
-        // Basic line wrapping
-        for (const word of words) {
-            const testLine = line + word + ' ';
-            if (ctx.measureText(testLine).width > maxContentWidth && line.length > 0) {
-                contentLines.push(line.trim());
-                line = word + ' ';
-            } else {
-                line = testLine;
-            }
+      ctx.font = `${fontSize * 0.8}px Sans-Serif`; // Smaller font for content
+      const words = graphNode.content.split(' ');
+      let line = '';
+      // Basic line wrapping
+      for (const word of words) {
+        const testLine = line + word + ' ';
+        if (ctx.measureText(testLine).width > maxContentWidth && line.length > 0) {
+          contentLines.push(line.trim());
+          line = word + ' ';
+        } else {
+          line = testLine;
         }
-        contentLines.push(line.trim());
-        contentHeight = contentLines.length * (fontSize * 0.9);
+      }
+      contentLines.push(line.trim());
+      contentHeight = contentLines.length * (fontSize * 0.9);
     }
-    
+
     const nodeWidth = maxContentWidth + arrowSpace;
     const nodeHeight = fontSize + padding * 2 + contentHeight;
 
     // --- ULOŽENÍ DIMENZÍ PRO HITBOX A KLIKÁNÍ ---
-    (graphNode as any).__bckgDimensions = { width: nodeWidth, height: nodeHeight, arrowSpace };
+    graphNode.__bckgDimensions = { width: nodeWidth, height: nodeHeight, arrowSpace };
 
     // --- Kreslení Pozadí ---
     ctx.fillStyle = buttonColor;
@@ -98,7 +111,7 @@ const MindMapGraph: React.FC<MindMapGraphProps> = ({ data, mapConfig, onNodeClic
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = textColor;
-    
+
     // Title (shifted left to make space for the arrow)
     ctx.font = `600 ${fontSize}px Sans-Serif`;
     const titleX = graphNode.x! - arrowSpace / 2;
@@ -107,49 +120,49 @@ const MindMapGraph: React.FC<MindMapGraphProps> = ({ data, mapConfig, onNodeClic
 
     // Content (if expanded)
     if (contentLines.length > 0) {
-        ctx.font = `${fontSize * 0.8}px Sans-Serif`;
-        let currentY = titleY + padding + (fontSize * 0.4);
-        for (const line of contentLines) {
-            ctx.fillText(line, titleX, currentY);
-            currentY += fontSize * 0.9;
-        }
+      ctx.font = `${fontSize * 0.8}px Sans-Serif`;
+      let currentY = titleY + padding + (fontSize * 0.4);
+      for (const line of contentLines) {
+        ctx.fillText(line, titleX, currentY);
+        currentY += fontSize * 0.9;
+      }
     }
 
     // --- Drawing Arrow ---
     if (graphNode.display_type === 'collapsible') {
-        // Position arrow in its own space on the right
-        const arrowX = graphNode.x! + nodeWidth / 2 - (arrowSpace / 2);
-        const arrowY = titleY;
-        
-        ctx.beginPath();
-        if (graphNode.is_collapsed) { // Down arrow
-            ctx.moveTo(arrowX - fontSize * 0.3, arrowY - fontSize * 0.15);
-            ctx.lineTo(arrowX + fontSize * 0.3, arrowY - fontSize * 0.15);
-            ctx.lineTo(arrowX, arrowY + fontSize * 0.3);
-        } else { // Up arrow
-            ctx.moveTo(arrowX - fontSize * 0.3, arrowY + fontSize * 0.15);
-            ctx.lineTo(arrowX + fontSize * 0.3, arrowY + fontSize * 0.15);
-            ctx.lineTo(arrowX, arrowY - fontSize * 0.3);
-        }
-        ctx.closePath();
-        ctx.fill();
+      // Position arrow in its own space on the right
+      const arrowX = graphNode.x! + nodeWidth / 2 - (arrowSpace / 2);
+      const arrowY = titleY;
+
+      ctx.beginPath();
+      if (graphNode.is_collapsed) { // Down arrow
+        ctx.moveTo(arrowX - fontSize * 0.3, arrowY - fontSize * 0.15);
+        ctx.lineTo(arrowX + fontSize * 0.3, arrowY - fontSize * 0.15);
+        ctx.lineTo(arrowX, arrowY + fontSize * 0.3);
+      } else { // Up arrow
+        ctx.moveTo(arrowX - fontSize * 0.3, arrowY + fontSize * 0.15);
+        ctx.lineTo(arrowX + fontSize * 0.3, arrowY + fontSize * 0.15);
+        ctx.lineTo(arrowX, arrowY - fontSize * 0.3);
+      }
+      ctx.closePath();
+      ctx.fill();
     }
   }, []);
 
   // --- Vykreslení HITBOXU na neviditelném plátně (pro Hover a tahání) ---
   const nodePointerAreaPaint = useCallback((node: NodeObject, color: string, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const graphNode = node as any;
+    const graphNode = node as GraphNode;
     if (graphNode.__bckgDimensions) {
-        const bckg = graphNode.__bckgDimensions;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        // Pokud prohlížeč podporuje roundRect, uděláme oblý roh
-        if (ctx.roundRect) {
-            ctx.roundRect(graphNode.x! - bckg.width / 2, graphNode.y! - bckg.height / 2, bckg.width, bckg.height, 5 / globalScale);
-        } else {
-            ctx.rect(graphNode.x! - bckg.width / 2, graphNode.y! - bckg.height / 2, bckg.width, bckg.height);
-        }
-        ctx.fill();
+      const bckg = graphNode.__bckgDimensions;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      // Pokud prohlížeč podporuje roundRect, uděláme oblý roh
+      if (ctx.roundRect) {
+        ctx.roundRect(graphNode.x! - bckg.width / 2, graphNode.y! - bckg.height / 2, bckg.width, bckg.height, 5 / globalScale);
+      } else {
+        ctx.rect(graphNode.x! - bckg.width / 2, graphNode.y! - bckg.height / 2, bckg.width, bckg.height);
+      }
+      ctx.fill();
     }
   }, []);
 
@@ -161,8 +174,8 @@ const MindMapGraph: React.FC<MindMapGraphProps> = ({ data, mapConfig, onNodeClic
     // Najdeme kořenový uzel (ten co nemá parent_id)
     const rootNode = data.nodes.find(n => !n.parent_id);
     if (rootNode && fgRef.current) {
-        fgRef.current.centerAt(rootNode.x, rootNode.y, 800);
-        fgRef.current.zoom(1.5, 800);
+      fgRef.current.centerAt(rootNode.x, rootNode.y, 800);
+      fgRef.current.zoom(1.5, 800);
     }
   };
 
@@ -182,15 +195,13 @@ const MindMapGraph: React.FC<MindMapGraphProps> = ({ data, mapConfig, onNodeClic
         nodeLabel=""
         nodeCanvasObject={nodeCanvasObject}
         nodePointerAreaPaint={nodePointerAreaPaint}
-        linkColor={(link: any) => {
-          // Pokud má potomek ve style_json definovanou barvu `linkColor`, použijeme ji.
-          if (link.target?.style_json) {
-              try {
-                  const styles = JSON.parse(link.target.style_json);
-                  if (styles.linkColor) return styles.linkColor;
-              } catch (e) { /* ignore parse error */ }
-          }
-          return 'rgba(255, 255, 255, 0.4)';
+        linkColor={(link) => {
+          const graphLink = link as GraphLink;
+          const targetStyleJson =
+            typeof graphLink.target === 'object' && graphLink.target !== null
+              ? graphLink.target.style_json
+              : undefined;
+          return getNodeLinkColor(targetStyleJson, 'rgba(255, 255, 255, 0.4)');
         }}
         linkWidth={1.5}
         linkDirectionalArrowLength={2} // Menší šipky u vazeb
@@ -199,41 +210,41 @@ const MindMapGraph: React.FC<MindMapGraphProps> = ({ data, mapConfig, onNodeClic
         onEngineStop={() => {
           // Zabráníme neustálému centrování, vycentrujeme jen po prvním renderu
           if (!isInitialCenterDone.current && data.nodes.length > 0) {
-              fgRef.current?.zoomToFit(400, 100);
-              isInitialCenterDone.current = true;
+            fgRef.current?.zoomToFit(400, 100);
+            isInitialCenterDone.current = true;
           }
         }}
         d3VelocityDecay={1 - (mapConfig.friction ?? 0.9)}
         onNodeClick={(node, event) => {
-          const graphNode = node as any;
+          const graphNode = node as GraphNode;
 
           // Pokud má node rozbalovací šipku a máme spočítané rozměry
           if (graphNode.display_type === 'collapsible' && graphNode.__bckgDimensions && fgRef.current) {
-             let x = (event as any).offsetX;
-             let y = (event as any).offsetY;
-             // Zajištění kompatibility v některých událostech
-             if (x === undefined && event.target) {
-                 const rect = (event.target as HTMLElement).getBoundingClientRect();
-                 x = (event as any).clientX - rect.left;
-                 y = (event as any).clientY - rect.top;
-             }
-             
-             if (x !== undefined && y !== undefined) {
-                 const coords = fgRef.current.screen2GraphCoords(x, y);
-                 const bckg = graphNode.__bckgDimensions;
-                 // Začátek oblasti se šipkou na pravé straně uzlu
-                 const arrowStartX = graphNode.x! + bckg.width / 2 - bckg.arrowSpace;
-                 
-                 // Pokud uživatel kliknul vysloveně do pravého kraje (oblast šipky)
-                 if (coords.x >= arrowStartX) {
-                     onNodeRightClick(graphNode); // Voláme metodu pro sbalení/rozbalení
-                     return;
-                 }
-             }
+            let x = event.offsetX;
+            let y = event.offsetY;
+            // Zajištění kompatibility v některých událostech
+            if (x === undefined && event.target instanceof HTMLElement) {
+              const rect = event.target.getBoundingClientRect();
+              x = event.clientX - rect.left;
+              y = event.clientY - rect.top;
+            }
+
+            if (x !== undefined && y !== undefined) {
+              const coords = fgRef.current.screen2GraphCoords(x, y);
+              const bckg = graphNode.__bckgDimensions;
+              // Začátek oblasti se šipkou na pravé straně uzlu
+              const arrowStartX = graphNode.x! + bckg.width / 2 - bckg.arrowSpace;
+
+              // Pokud uživatel kliknul vysloveně do pravého kraje (oblast šipky)
+              if (coords.x >= arrowStartX) {
+                onNodeRightClick(graphNode); // Voláme metodu pro sbalení/rozbalení
+                return;
+              }
+            }
           }
-          
+
           // Jinak standardně otevřeme editaci (jako dřív)
-          onNodeClick(node as GraphNode);
+          onNodeClick(graphNode);
         }}
         onNodeRightClick={(node, event) => {
           event.preventDefault();

@@ -27,6 +27,7 @@
     "react-force-graph-2d": "^1.29.1"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

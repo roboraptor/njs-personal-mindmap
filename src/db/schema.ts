@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { sqliteTable, text, real, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, real, integer, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 
 // 1. Tabulka pro mapy
 export const maps = sqliteTable('maps', {
@@ -18,7 +18,7 @@ export const maps = sqliteTable('maps', {
 export const nodes = sqliteTable('nodes', {
   id: text('id').primaryKey(),
   map_id: text('map_id').notNull().references(() => maps.id, { onDelete: 'cascade' }),
-  parent_id: text('parent_id').references((): any => nodes.id, { onDelete: 'cascade' }),
+  parent_id: text('parent_id').references((): AnySQLiteColumn => nodes.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
   content: text('content'),
   display_type: text('display_type').notNull().default('button'), // 'button', 'collapsible', 'image'

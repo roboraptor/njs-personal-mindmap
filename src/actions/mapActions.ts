@@ -1,47 +1,8 @@
 'use server';
 
 import { mapsRepository } from '@/data/mapsRepository';
-import { nodesRepository } from '@/data/nodesRepository';
 import { randomUUID } from 'crypto';
 import { revalidatePath } from 'next/cache';
-
-export async function createDefaultMap(): Promise<string> {
-  console.log('Vytváření výchozí mapy...');
-  
-  const mapId = randomUUID();
-  
-  // 1. Vytvoření nové mapy
-  await mapsRepository.create({
-    id: mapId,
-    title: 'Moje první mapa',
-    description: 'Automaticky vygenerovaná mapa pro rychlý start.',
-  });
-
-  // 2. Vytvoření kořenového uzlu
-  const rootNodeId = randomUUID();
-  await nodesRepository.create({
-    id: rootNodeId,
-    map_id: mapId,
-    title: 'Hlavní myšlenka',
-    content: 'Sem patří centrální téma vaší mapy.',
-  });
-
-  // 3. Vytvoření podřízeného uzlu
-  await nodesRepository.create({
-    id: randomUUID(),
-    map_id: mapId,
-    parent_id: rootNodeId,
-    title: 'Podřízený uzel',
-    content: 'Toto je první větev vaší myšlenkové mapy.',
-  });
-
-  console.log(`Výchozí mapa s ID ${mapId} byla úspěšně vytvořena.`);
-
-  // Invalidujeme cache, aby budoucí navigace viděla nová data.
-  revalidatePath('/', 'layout');
-
-  return mapId;
-}
 
 export async function createMap(prevState: { message: string }, formData: FormData) {
     const title = formData.get('title') as string;

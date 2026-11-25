@@ -5,9 +5,9 @@ import Link from 'next/link';
 import type { Map } from '@/db/schema';
 
 interface MapsSettingsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     edit?: string;
-  };
+  }>;
 }
 
 export default async function MapsSettingsPage({ searchParams }: MapsSettingsPageProps) {

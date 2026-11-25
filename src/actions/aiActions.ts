@@ -31,7 +31,10 @@ export async function generateAIPrompt(mapId: string): Promise<string> {
   });
 
   // 3. Rekurzivní funkce pro generování Markdown odrážek
-  function buildTreeMarkdown(nodeId: string, depth: number = 0): string {
+  function buildTreeMarkdown(nodeId: string, depth: number = 0, visited: Set<string> = new Set()): string {
+    if (visited.has(nodeId)) return '';
+    visited.add(nodeId);
+
     const node = nodeMap.get(nodeId);
     if (!node) return '';
 
@@ -45,7 +48,7 @@ export async function generateAIPrompt(mapId: string): Promise<string> {
     children.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
     
     for (const child of children) {
-      md += buildTreeMarkdown(child.id, depth + 1);
+      md += buildTreeMarkdown(child.id, depth + 1, visited);
     }
     return md;
   }

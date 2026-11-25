@@ -2,7 +2,6 @@ import { db } from '@/db';
 import { maps } from '@/db/schema';
 import type { Map } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
-import crypto from 'crypto';
 
 type NewMap = Omit<Map, 'created_at' | 'updated_at' | 'gravity_strength' | 'repulsion_force' | 'friction' | 'theme_json'>;
 
